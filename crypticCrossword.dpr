@@ -62,7 +62,7 @@ begin
 
   mainForm.clearGrid;
 
-  mainForm.readSavedGrid(extractFilePath(paramStr(0)) + 'crypticCrossword.txt', 1);
+  mainForm.readSavedGrid(extractFilePath(paramStr(0)) + 'crypticCrossword.txt', -1);
 
 //  mainForm.clearGrid;
 

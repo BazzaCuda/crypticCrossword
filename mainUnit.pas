@@ -9,7 +9,7 @@ uses
 
 const
   GRID_SIZE = 15;
-  SETUP = TRUE;
+  SETUP = FALSE;
 
 type
   TClueDirection = (cdAcross, cdDown);
@@ -195,7 +195,21 @@ begin
     case vIsLetter of
       TRUE:
         begin
-          FLetters[vCol, vRow] := upCase(vChar);
+          var vNumStrEmptyForLetter := (vNumStr = '');
+          case vNumStrEmptyForLetter of
+            FALSE:
+              begin
+                var vSpaceCount := strToInt(vNumStr);
+                for var vC := 1 to vSpaceCount do
+                begin
+                  FIsBlack[vCol, vRow] := FALSE;
+                  inc(vCol);
+                end;
+                vNumStr := '';
+              end;
+          end;
+
+          FLetters[vCol, vRow] := vChar;
           inc(vCol);
           CONTINUE;
         end;
@@ -748,6 +762,7 @@ begin
   var vStringList := TStringList.create;
   try
     vStringList.loadFromFile(aFilename);
+    case aIndex = -1 of TRUE: aIndex := vStringList.count - 1; end;
 
     var vIsValidIndex := (aIndex >= 0) and (aIndex < vStringList.count);
     case vIsValidIndex of
