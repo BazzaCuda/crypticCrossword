@@ -9,6 +9,9 @@ uses
   vcl.grids, vcl.extCtrls, system.types, system.uiTypes;
 
 type
+  TClueDirection = (cdAcross, cdDown);
+  TGridModifier = (gmHorzWordBreak, gmVertWordBreak, gmHorzHyphen, gmVertHyphen);
+
   TMainForm = class(TForm)
   private
     FCrosswordGrid: TDrawGrid;
@@ -27,6 +30,8 @@ type
     procedure calculateNumbers;
   public
     constructor create(aOwner: TComponent); override;
+    procedure addModifier(aCol: integer; aRow: integer; aModifier: TGridModifier);
+    procedure addModifierByClue(aClueNumber: integer; aDirection: TClueDirection; aLetterPosition: integer; aModifier: TGridModifier);
     procedure arrayGrid(const aLines: array of string);
     procedure setupGrid(const aLayout: string);
   end;
@@ -193,6 +198,74 @@ begin
   end;
 
   calculateNumbers;
+end;
+
+procedure TMainForm.addModifier(aCol, aRow: integer; aModifier: TGridModifier);
+begin
+var vIsBoldRight := aModifier = gmHorzWordBreak;
+  case vIsBoldRight of
+    TRUE: FBoldRight[aCol, aRow] := TRUE;
+  end;
+
+  var vIsBoldBottom := aModifier = gmVertWordBreak;
+  case vIsBoldBottom of
+    TRUE: FBoldBottom[aCol, aRow] := TRUE;
+  end;
+
+  var vIsHyphenRight := aModifier = gmHorzHyphen;
+  case vIsHyphenRight of
+    TRUE: FHyphenRight[aCol, aRow] := TRUE;
+  end;
+
+  var vIsHyphenBottom := aModifier = gmVertHyphen;
+  case vIsHyphenBottom of
+    TRUE: FHyphenBottom[aCol, aRow] := TRUE;
+  end;
+
+  FCrosswordGrid.invalidate;
+end;
+
+procedure TMainForm.addModifierByClue(aClueNumber: integer; aDirection: TClueDirection; aLetterPosition: integer; aModifier: TGridModifier);
+begin
+var vFound := FALSE;
+  var vTargetCol := 0;
+  var vTargetRow := 0;
+
+  for var vRow := 0 to 14 do
+  begin
+    for var vCol := 0 to 14 do
+    begin
+      case FNumbers[vCol, vRow] = aClueNumber of
+        TRUE:
+          begin
+            vFound := TRUE;
+            var vIsAcross := aDirection = cdAcross;
+            case vIsAcross of
+              TRUE:
+                begin
+                  vTargetCol := vCol + aLetterPosition - 1;
+                  vTargetRow := vRow;
+                end;
+              FALSE:
+                begin
+                  vTargetCol := vCol;
+                  vTargetRow := vRow + aLetterPosition - 1;
+                end;
+            end;
+            BREAK;
+          end;
+      end;
+    end;
+    case vFound of
+      TRUE: BREAK;
+    end;
+  end;
+
+  case vFound of
+    FALSE: EXIT;
+  end;
+
+  addModifier(vTargetCol, vTargetRow, aModifier);
 end;
 
 procedure TMainForm.arrayGrid(const aLines: array of string);
