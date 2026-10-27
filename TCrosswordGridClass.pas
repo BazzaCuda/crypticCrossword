@@ -3,9 +3,9 @@ unit TCrosswordGridClass;
 interface
 
 uses
-  winapi.windows, winapi.messages, system.sysUtils, system.variants,
-  system.classes, vcl.graphics, vcl.controls, vcl.forms, vcl.dialogs,
-  vcl.grids, vcl.extCtrls, system.types, system.uiTypes;
+  winAPI.messages, winAPI.windows,
+  system.classes, system.sysUtils, system.types, system.UITypes, system.variants,
+  vcl.controls, vcl.dialogs, vcl.extCtrls, vcl.forms, vcl.graphics, vcl.grids;
 
 const
   GRID_SIZE = 15;
@@ -29,13 +29,13 @@ type
   TCrosswordGrid = class(TInterfacedObject, ICrosswordGrid)
   private
     FCrosswordGrid: TDrawGrid;
-    FIsBlack:       array[0..14, 0..14] of boolean;
-    FNumbers:       array[0..14, 0..14] of integer;
-    FLetters:       array[0..14, 0..14] of char;
-    FBoldRight:     array[0..14, 0..14] of boolean;
-    FBoldBottom:    array[0..14, 0..14] of boolean;
-    FHyphenRight:   array[0..14, 0..14] of boolean;
-    FHyphenBottom:  array[0..14, 0..14] of boolean;
+    FIsBlack:       array[1..GRID_SIZE, 1..GRID_SIZE] of boolean;
+    FNumbers:       array[1..GRID_SIZE, 1..GRID_SIZE] of integer;
+    FLetters:       array[1..GRID_SIZE, 1..GRID_SIZE] of char;
+    FBoldRight:     array[1..GRID_SIZE, 1..GRID_SIZE] of boolean;
+    FBoldBottom:    array[1..GRID_SIZE, 1..GRID_SIZE] of boolean;
+    FHyphenRight:   array[1..GRID_SIZE, 1..GRID_SIZE] of boolean;
+    FHyphenBottom:  array[1..GRID_SIZE, 1..GRID_SIZE] of boolean;
     FAcrossDirection: boolean;
 
     procedure gridDrawCell(sender: TObject; aCol, aRow: integer; aRect: TRect; aState: TGridDrawState);
@@ -72,8 +72,8 @@ begin
   FCrosswordGrid                  := TDrawGrid.create(aParent);
   FCrosswordGrid.parent           := aParent;
   FCrosswordGrid.align            := alClient;
-  FCrosswordGrid.colCount         := 15;
-  FCrosswordGrid.rowCount         := 15;
+  FCrosswordGrid.colCount         := GRID_SIZE;
+  FCrosswordGrid.rowCount         := GRID_SIZE;
   FCrosswordGrid.defaultColWidth  := 33;
   FCrosswordGrid.defaultRowHeight := 33;
   FCrosswordGrid.fixedCols        := 0;
@@ -84,10 +84,10 @@ begin
   FCrosswordGrid.borderStyle      := bsNone;
   FCrosswordGrid.defaultDrawing   := FALSE;
 
-  FCrosswordGrid.onDrawCell   := gridDrawCell;
-  FCrosswordGrid.onKeyPress   := gridKeyPress;
-  FCrosswordGrid.onKeyDown    := gridKeyDown;
-  FCrosswordGrid.onMouseDown  := gridMouseDown;
+  FCrosswordGrid.onDrawCell       := gridDrawCell;
+  FCrosswordGrid.onKeyPress       := gridKeyPress;
+  FCrosswordGrid.onKeyDown        := gridKeyDown;
+  FCrosswordGrid.onMouseDown      := gridMouseDown;
 end;
 
 procedure TCrosswordGrid.saveGridToFile(const aFilename: string);
@@ -95,75 +95,49 @@ begin
   var vStringList := TStringList.create;
   try
     case fileExists(aFileName) of TRUE: vStringList.loadFromFile(aFileName); end;
+
     var vCombined := '';
-    for var vRow := 0 to 14 do
+    for var vRow := 1 to GRID_SIZE do
     begin
       var vEmptyCount := 0;
-      for var vCol := 0 to 14 do
+      for var vCol := 1 to GRID_SIZE do
       begin
-        var vIsCellBlack      := FIsBlack[vCol, vRow];
-        var vHasLetter        := FLetters[vCol, vRow] <> #0;
-        var vHasBoldRight     := FBoldRight[vCol, vRow];
-        var vHasBoldBottom    := FBoldBottom[vCol, vRow];
-        var vHasHyphenRight   := FHyphenRight[vCol, vRow];
-        var vHasHyphenBottom  := FHyphenBottom[vCol, vRow];
+        var vIsCellBlack      := FIsBlack       [vCol, vRow];
+        var vHasLetter        := FLetters       [vCol, vRow] <> #0;
+        var vHasBoldRight     := FBoldRight     [vCol, vRow];
+        var vHasBoldBottom    := FBoldBottom    [vCol, vRow];
+        var vHasHyphenRight   := FHyphenRight   [vCol, vRow];
+        var vHasHyphenBottom  := FHyphenBottom  [vCol, vRow];
 
         var vHasContent   := vIsCellBlack OR vHasLetter;
         var vHasModifier  := vHasBoldRight OR vHasBoldBottom OR vHasHyphenRight OR vHasHyphenBottom;
 
-        case vHasContent of
-          TRUE:
-            begin
-              case vEmptyCount > 0 of
-                TRUE:
-                  begin
-                    vCombined := vCombined + intToStr(vEmptyCount);
-                    vEmptyCount := 0;
-                  end;
-              end;
+        case vHasContent of  TRUE:  begin
+                                      case vEmptyCount > 0 of  TRUE:  begin
+                                                                        vCombined := vCombined + intToStr(vEmptyCount);
+                                                                        vEmptyCount := 0; end;end;
 
-              case vIsCellBlack of
-                TRUE: vCombined := vCombined + '.';
-                FALSE: vCombined := vCombined + FLetters[vCol, vRow];
-              end;
-            end;
-          FALSE: inc(vEmptyCount);
+                                      case vIsCellBlack of   TRUE: vCombined := vCombined + '.';
+                                                            FALSE: vCombined := vCombined + FLetters[vCol, vRow]; end;
+                                    end;
+                            FALSE: inc(vEmptyCount);
         end;
 
-        case vHasModifier of
-          TRUE:
-            begin
-              case vEmptyCount > 0 of
-                TRUE:
-                  begin
-                    vCombined := vCombined + intToStr(vEmptyCount);
-                    vEmptyCount := 0;
-                  end;
-              end;
+        case vHasModifier of   TRUE:  begin
+                                        case vEmptyCount > 0 of  TRUE:  begin
+                                                                          vCombined := vCombined + intToStr(vEmptyCount);
+                                                                          vEmptyCount := 0; end;end;
 
-              case vHasBoldRight of
-                TRUE: vCombined := vCombined + '|';
-              end;
-              case vHasBoldBottom of
-                TRUE: vCombined := vCombined + '_';
-              end;
-              case vHasHyphenRight of
-                TRUE: vCombined := vCombined + '-';
-              end;
-              case vHasHyphenBottom of
-                TRUE: vCombined := vCombined + '=';
-              end;
-            end;
-        end;
+                                        case vHasBoldRight    of   TRUE:  vCombined := vCombined + '|'; end;
+                                        case vHasBoldBottom   of   TRUE:  vCombined := vCombined + '_'; end;
+                                        case vHasHyphenRight  of   TRUE:  vCombined := vCombined + '-'; end;
+                                        case vHasHyphenBottom of   TRUE:  vCombined := vCombined + '='; end;
+                                      end;end;
       end;
 
-      case vEmptyCount > 0 of
-        TRUE: vCombined := vCombined + intToStr(vEmptyCount);
-      end;
+      case vEmptyCount > 0 of  TRUE:  vCombined := vCombined + intToStr(vEmptyCount); end;
 
-      case vRow < 14 of
-        TRUE: vCombined := vCombined + '/';
-      end;
+      case vRow < GRID_SIZE of   TRUE: vCombined := vCombined + '/'; end;
     end;
 
     vStringList.add(vCombined);
@@ -177,8 +151,8 @@ procedure TCrosswordGrid.setupGrid(const aLayout: string);
 begin
   clearGrid;
 
-  var vCol              := 0;
-  var vRow              := 0;
+  var vCol              := 1;
+  var vRow              := 1;
   var vNumStr : string  := '';
 
   for var vIndex := 1 to length(aLayout) do
@@ -246,7 +220,7 @@ begin
     case vIsSlash of
       TRUE:
         begin
-          vCol := 0;
+          vCol := 1;
           inc(vRow);
           CONTINUE;
         end;
@@ -326,9 +300,9 @@ begin
   var vTargetCol  := 0;
   var vTargetRow  := 0;
 
-  for var vRow := 0 to 14 do
+  for var vRow := 1 to GRID_SIZE do
   begin
-    for var vCol := 0 to 14 do
+    for var vCol := 1 to GRID_SIZE do
     begin
       case FNumbers[vCol, vRow] = aClueNumber of
         TRUE:
@@ -405,9 +379,9 @@ end;
 procedure TCrosswordGrid.calculateNumbers;
 begin
   var vNum := 1;
-  for var vRow := 0 to 14 do
+  for var vRow := 1 to GRID_SIZE do
   begin
-    for var vCol := 0 to 14 do
+    for var vCol := 1 to GRID_SIZE do
     begin
       FNumbers[vCol, vRow] := 0;
       var vIsCellBlack := FIsBlack[vCol, vRow];
@@ -416,22 +390,22 @@ begin
       end;
 
       var vHasLeft := FALSE;
-      case vCol > 0 of
+      case vCol > 1 of
         TRUE: vHasLeft := NOT FIsBlack[vCol - 1, vRow];
       end;
 
       var vHasRight := FALSE;
-      case vCol < 14 of
+      case vCol < GRID_SIZE of
         TRUE: vHasRight := NOT FIsBlack[vCol + 1, vRow];
       end;
 
       var vHasTop := FALSE;
-      case vRow > 0 of
+      case vRow > 1 of
         TRUE: vHasTop := NOT FIsBlack[vCol, vRow - 1];
       end;
 
       var vHasBottom := FALSE;
-      case vRow < 14 of
+      case vRow < GRID_SIZE of
         TRUE: vHasBottom := NOT FIsBlack[vCol, vRow + 1];
       end;
 
@@ -451,9 +425,9 @@ end;
 
 procedure TCrosswordGrid.clearGrid;
 begin
-  for var vRow := 0 to 14 do
+  for var vRow := 1 to GRID_SIZE do
   begin
-    for var vCol := 0 to 14 do
+    for var vCol := 1 to GRID_SIZE do
     begin
       FIsBlack      [vCol, vRow]  := FALSE;
       FNumbers      [vCol, vRow]  := 0;
@@ -468,8 +442,11 @@ end;
 
 procedure TCrosswordGrid.gridDrawCell(sender: TObject; aCol, aRow: integer; aRect: TRect; aState: TGridDrawState);
 begin
+  var vCol := aCol + 1;
+  var vRow := aRow + 1;
+
   var vCanvas := FCrosswordGrid.canvas;
-  var vIsCellBlack := FIsBlack[aCol, aRow];
+  var vIsCellBlack := FIsBlack[vCol, vRow];
 
   case vIsCellBlack of
     TRUE: vCanvas.brush.color := clBlack;
@@ -494,7 +471,7 @@ begin
   vCanvas.moveTo(aRect.left, aRect.top);
   vCanvas.lineTo(aRect.left, aRect.bottom);
 
-  case aCol = 14 of
+  case vCol = GRID_SIZE of
     TRUE:
       begin
         vCanvas.moveTo(aRect.right - 1, aRect.top);
@@ -502,7 +479,7 @@ begin
       end;
   end;
 
-  case aRow = 14 of
+  case vRow = GRID_SIZE of
     TRUE:
       begin
         vCanvas.moveTo(aRect.left, aRect.bottom - 1);
@@ -510,7 +487,7 @@ begin
       end;
   end;
 
-  var vHasBoldRight := FBoldRight[aCol, aRow];
+  var vHasBoldRight := FBoldRight[vCol, vRow];
   case vHasBoldRight of
     TRUE:
       begin
@@ -519,7 +496,7 @@ begin
       end;
   end;
 
-  var vHasBoldBottom := FBoldBottom[aCol, aRow];
+  var vHasBoldBottom := FBoldBottom[vCol, vRow];
   case vHasBoldBottom of
     TRUE:
       begin
@@ -528,7 +505,7 @@ begin
       end;
   end;
 
-  var vHasHyphenRight := FHyphenRight[aCol, aRow];
+  var vHasHyphenRight := FHyphenRight[vCol, vRow];
   case vHasHyphenRight of
     TRUE:
       begin
@@ -540,8 +517,8 @@ begin
   end;
 
   var vPrevHasHyphenRight := FALSE;
-  case aCol > 0 of
-    TRUE: vPrevHasHyphenRight := FHyphenRight[aCol - 1, aRow];
+  case vCol > 1 of
+    TRUE: vPrevHasHyphenRight := FHyphenRight[vCol - 1, vRow];
   end;
 
   case vPrevHasHyphenRight of
@@ -554,7 +531,7 @@ begin
       end;
   end;
 
-  var vHasHyphenBottom := FHyphenBottom[aCol, aRow];
+  var vHasHyphenBottom := FHyphenBottom[vCol, vRow];
   case vHasHyphenBottom of
     TRUE:
       begin
@@ -566,8 +543,8 @@ begin
   end;
 
   var vPrevHasHyphenBottom := FALSE;
-  case aRow > 0 of
-    TRUE: vPrevHasHyphenBottom := FHyphenBottom[aCol, aRow - 1];
+  case vRow > 1 of
+    TRUE: vPrevHasHyphenBottom := FHyphenBottom[vCol, vRow - 1];
   end;
 
   case vPrevHasHyphenBottom of
@@ -584,7 +561,7 @@ begin
     TRUE: EXIT;
   end;
 
-  var vHasNumber := FNumbers[aCol, aRow] > 0;
+  var vHasNumber := FNumbers[vCol, vRow] > 0;
   case vHasNumber of
     TRUE:
       begin
@@ -593,11 +570,11 @@ begin
         vCanvas.font.style  := [fsBold];
         vCanvas.font.color  := clBlack;
         vCanvas.brush.style := bsClear;
-        vCanvas.textOut(aRect.left + 2, aRect.top + 1, intToStr(FNumbers[aCol, aRow]));
+        vCanvas.textOut(aRect.left + 2, aRect.top + 1, intToStr(FNumbers[vCol, vRow]));
       end;
   end;
 
-  var vHasLetter := FLetters[aCol, aRow] <> #0;
+  var vHasLetter := FLetters[vCol, vRow] <> #0;
   case vHasLetter of
     FALSE: EXIT;
   end;
@@ -607,7 +584,7 @@ begin
   vCanvas.font.style  := [fsBold];
   vCanvas.font.color  := clBlack;
   vCanvas.brush.style := bsClear;
-  var vText           := FLetters[aCol, aRow];
+  var vText           := FLetters[vCol, vRow];
 
   var vDrawRect := aRect;
   vDrawRect.top := vDrawRect.top + 6;
@@ -616,89 +593,53 @@ end;
 
 procedure TCrosswordGrid.gridKeyPress(sender: TObject; var aKey: char);
 begin
-  var vCol := FCrosswordGrid.col;
-  var vRow := FCrosswordGrid.row;
+  var vCol := FCrosswordGrid.col + 1;
+  var vRow := FCrosswordGrid.row + 1;
 
   var vIsCellBlack := FIsBlack[vCol, vRow];
-  case vIsCellBlack of
-    TRUE: EXIT;
-  end;
+  case vIsCellBlack of   TRUE: EXIT; end;
 
   var vIsModifier := aKey in ['|', '_', '-', '='];
-  var vIsSetupAndModifier := SETUP AND vIsModifier;
+  var vIsSetupAndModifier := {SETUP AND} vIsModifier;
 
-  case vIsSetupAndModifier of
-    TRUE:
-      begin
-        applySetupModifier(vCol, vRow, aKey);
-        EXIT;
-      end;
-  end;
+  case vIsSetupAndModifier of  TRUE:  begin
+                                        applySetupModifier(vCol, vRow, aKey);
+                                        EXIT;
+                                      end;end;
 
   var vIsLetter := aKey in ['a'..'z', 'A'..'Z'];
   var vIsBackspace := aKey = #8;
 
-  case vIsLetter or vIsBackspace of
-    FALSE: EXIT;
-  end;
+  case vIsLetter or vIsBackspace of FALSE: EXIT; end;
 
-  case vIsBackspace of
-    TRUE:
-      begin
-        FLetters[vCol, vRow] := #0;
-        case FAcrossDirection of
-          TRUE:
-            case vCol > 0 of
-              TRUE: FCrosswordGrid.col := vCol - 1;
-            end;
-          FALSE:
-            case vRow > 0 of
-              TRUE: FCrosswordGrid.row := vRow - 1;
-            end;
-        end;
-        FCrosswordGrid.invalidate;
-        EXIT;
-      end;
-  end;
+  case vIsBackspace of   TRUE:  begin
+                                  FLetters[vCol, vRow] := #0;
+                                  case FAcrossDirection of   TRUE:  case vCol > 1 of   TRUE: FCrosswordGrid.col := FCrosswordGrid.col - 1; end;
+                                                            FALSE:  case vRow > 1 of   TRUE: FCrosswordGrid.row := FCrosswordGrid.row - 1; end;
+                                  end;
+                                  FCrosswordGrid.invalidate;
+                                  EXIT;
+                                end;end;
 
   var vUpperKey := upCase(aKey);
   FLetters[vCol, vRow] := vUpperKey;
 
   var vRightIsAvailable := FALSE;
-  case vCol < 14 of
-    TRUE: vRightIsAvailable := NOT FIsBlack[vCol + 1, vRow];
-  end;
+  case vCol < GRID_SIZE of   TRUE: vRightIsAvailable := NOT FIsBlack[vCol + 1, vRow]; end;
 
   var vBelowIsAvailable := FALSE;
-  case vRow < 14 of
-    TRUE: vBelowIsAvailable := NOT FIsBlack[vCol, vRow + 1];
-  end;
+  case vRow < GRID_SIZE of   TRUE: vBelowIsAvailable := NOT FIsBlack[vCol, vRow + 1]; end;
 
-  case FAcrossDirection of
-    TRUE:
-      case vRightIsAvailable of
-        TRUE: FCrosswordGrid.col := vCol + 1;
-        FALSE:
-          case vBelowIsAvailable of
-            TRUE:
-              begin
-                FCrosswordGrid.row := vRow + 1;
-                FAcrossDirection := FALSE;
-              end;
-          end;
-      end;
-    FALSE:
-      case vBelowIsAvailable of
-        TRUE: FCrosswordGrid.row := vRow + 1;
-        FALSE:
-          case vRightIsAvailable of
-            TRUE:
-              begin
-                FCrosswordGrid.col := vCol + 1;
-                FAcrossDirection := TRUE;
-              end;
-          end;
-      end;
+
+  case FAcrossDirection of   TRUE:  case vRightIsAvailable of  TRUE:  FCrosswordGrid.col := FCrosswordGrid.col + 1;
+                                                              FALSE:  case vBelowIsAvailable of  TRUE:  begin
+                                                                                                          FCrosswordGrid.row := FCrosswordGrid.row + 1;
+                                                                                                          FAcrossDirection := FALSE; end;end;end;
+
+                            FALSE:  case vBelowIsAvailable of  TRUE:  FCrosswordGrid.row := FCrosswordGrid.row + 1;
+                                                              FALSE:  case vRightIsAvailable of  TRUE:  begin
+                                                                                                          FCrosswordGrid.col := FCrosswordGrid.col + 1;
+                                                                                                          FAcrossDirection := TRUE; end;end;end;
   end;
 
   FCrosswordGrid.invalidate;
@@ -710,32 +651,28 @@ begin
     FALSE: EXIT;
   end;
 
-  var vCol := -1;
-  var vRow := -1;
-  FCrosswordGrid.mouseToCell(x, y, vCol, vRow);
+  var vDrawCol := -1;
+  var vDrawRow := -1;
+  FCrosswordGrid.mouseToCell(x, y, vDrawCol, vDrawRow);
 
-  var vIsValidCell := (vCol >= 0) AND (vRow >= 0);
-  case vIsValidCell of
-    FALSE: EXIT;
-  end;
+  var vIsValidCell := (vDrawCol >= 0) AND (vDrawRow >= 0);
+  case vIsValidCell of  FALSE: EXIT; end;
+
+  var vCol := vDrawCol + 1;
+  var vRow := vDrawRow + 1;
 
   var vIsLeftClick := button = mbLeft;
-  case vIsLeftClick of
-    TRUE: FIsBlack[vCol, vRow] := FALSE;
-  end;
+  case vIsLeftClick of   TRUE:  FIsBlack[vCol, vRow] := FALSE; end;
 
   var vIsRightClick := button = mbRight;
-  case vIsRightClick of
-    TRUE:
-      begin
-        FIsBlack[vCol, vRow] := TRUE;
-        FLetters[vCol, vRow] := #0;
-        FBoldRight[vCol, vRow] := FALSE;
-        FBoldBottom[vCol, vRow] := FALSE;
-        FHyphenRight[vCol, vRow] := FALSE;
-        FHyphenBottom[vCol, vRow] := FALSE;
-      end;
-  end;
+  case vIsRightClick of  TRUE:  begin
+                                  FIsBlack      [vCol, vRow] := TRUE;
+                                  FLetters      [vCol, vRow] := #0;
+                                  FBoldRight    [vCol, vRow] := FALSE;
+                                  FBoldBottom   [vCol, vRow] := FALSE;
+                                  FHyphenRight  [vCol, vRow] := FALSE;
+                                  FHyphenBottom [vCol, vRow] := FALSE;
+                                end;end;
 
   calculateNumbers;
   FCrosswordGrid.invalidate;
@@ -744,19 +681,15 @@ end;
 procedure TCrosswordGrid.readSavedGrid(const aFilename: string; aIndex: integer);
 begin
   var vFileExists := fileExists(aFilename);
-  case vFileExists of
-    FALSE: EXIT;
-  end;
+  case vFileExists of FALSE:  EXIT; end;
 
   var vStringList := TStringList.create;
   try
     vStringList.loadFromFile(aFilename);
-    case aIndex = -1 of TRUE: aIndex := vStringList.count - 1; end;
+    case aIndex = -1 of  TRUE: aIndex := vStringList.count - 1; end;
 
     var vIsValidIndex := (aIndex >= 0) and (aIndex < vStringList.count);
-    case vIsValidIndex of
-      TRUE: setupGrid(vStringList[aIndex]);
-    end;
+    case vIsValidIndex of  TRUE: setupGrid(vStringList[aIndex]); end;
   finally
     vStringList.free;
   end;
@@ -765,35 +698,21 @@ end;
 procedure TCrosswordGrid.gridKeyDown(sender: TObject; var aKey: word; aShift: TShiftState);
 begin
   var vIsEscape := aKey = VK_ESCAPE;
-  case vIsEscape of
-    TRUE:
-      begin
-        var vForm := getParentForm(FCrosswordGrid);
-        case vForm <> NIL of
-          TRUE: TForm(vForm).close;
-        end;
-        EXIT;
-      end;
-  end;
+  case vIsEscape of  TRUE:  begin
+                              var vForm := getParentForm(FCrosswordGrid);
+                              case vForm <> NIL of   TRUE: TForm(vForm).close; end;
+                              EXIT; end;end;
 
   var vIsRightOrLeft := (aKey = VK_RIGHT) or (aKey = VK_LEFT);
-  case vIsRightOrLeft of
-    TRUE: FAcrossDirection := TRUE;
-  end;
+  case vIsRightOrLeft of   TRUE: FAcrossDirection := TRUE; end;
 
   var vIsUpOrDown := (aKey = VK_DOWN) or (aKey = VK_UP);
-  case vIsUpOrDown of
-    TRUE: FAcrossDirection := FALSE;
-  end;
+  case vIsUpOrDown of  TRUE: FAcrossDirection := FALSE; end;
 
   var vIsSpace := aKey = VK_SPACE;
-  case vIsSpace of
-    TRUE:
-      begin
-        FAcrossDirection := NOT FAcrossDirection;
-        FCrosswordGrid.invalidate;
-      end;
-  end;
+  case vIsSpace of   TRUE:  begin
+                              FAcrossDirection := NOT FAcrossDirection;
+                              FCrosswordGrid.invalidate; end;end;
 end;
 
 end.
