@@ -345,20 +345,14 @@ begin
   var vCol := aCol + 1;
   var vRow := aRow + 1;
 
-  var vCanvas := FCrosswordGrid.canvas;
-  var vIsCellBlack := FIsBlack[vCol, vRow];
+  var vCanvas       := FCrosswordGrid.canvas;
+  var vIsCellBlack  := FIsBlack[vCol, vRow];
 
-  case vIsCellBlack of
-    TRUE: vCanvas.brush.color := clBlack;
-    FALSE:
-      begin
-        var vIsSelected := (aCol = FCrosswordGrid.col) and (aRow = FCrosswordGrid.row);
-        case vIsSelected of
-          TRUE: vCanvas.brush.color := $00EAF5EA;
-          FALSE: vCanvas.brush.color := clWhite;
-        end;
-      end;
-  end;
+  case vIsCellBlack of   TRUE:  vCanvas.brush.color := clBlack;
+                        FALSE:  begin
+                                  var vIsSelected := (aCol = FCrosswordGrid.col) and (aRow = FCrosswordGrid.row);
+                                  case vIsSelected of  TRUE: vCanvas.brush.color := $00EAF5EA;
+                                                      FALSE: vCanvas.brush.color := clWhite; end;end;end;
 
   vCanvas.fillRect(aRect);
 
@@ -371,113 +365,69 @@ begin
   vCanvas.moveTo(aRect.left, aRect.top);
   vCanvas.lineTo(aRect.left, aRect.bottom);
 
-  case vCol = GRID_SIZE of
-    TRUE:
-      begin
-        vCanvas.moveTo(aRect.right - 1, aRect.top);
-        vCanvas.lineTo(aRect.right - 1, aRect.bottom);
-      end;
-  end;
+  case vCol = GRID_SIZE of   TRUE:  begin
+                                      vCanvas.moveTo(aRect.right - 1, aRect.top);
+                                      vCanvas.lineTo(aRect.right - 1, aRect.bottom); end;end;
 
-  case vRow = GRID_SIZE of
-    TRUE:
-      begin
-        vCanvas.moveTo(aRect.left, aRect.bottom - 1);
-        vCanvas.lineTo(aRect.right, aRect.bottom - 1);
-      end;
-  end;
+  case vRow = GRID_SIZE of   TRUE: begin
+                                      vCanvas.moveTo(aRect.left, aRect.bottom - 1);
+                                      vCanvas.lineTo(aRect.right, aRect.bottom - 1); end;end;
 
   var vHasBoldRight := FBoldRight[vCol, vRow];
-  case vHasBoldRight of
-    TRUE:
-      begin
-        vCanvas.moveTo(aRect.right - 1, aRect.top);
-        vCanvas.lineTo(aRect.right - 1, aRect.bottom);
-      end;
-  end;
+  case vHasBoldRight of  TRUE:  begin
+                                  vCanvas.moveTo(aRect.right - 1, aRect.top);
+                                  vCanvas.lineTo(aRect.right - 1, aRect.bottom); end;end;
 
   var vHasBoldBottom := FBoldBottom[vCol, vRow];
-  case vHasBoldBottom of
-    TRUE:
-      begin
-        vCanvas.moveTo(aRect.left, aRect.bottom - 1);
-        vCanvas.lineTo(aRect.right, aRect.bottom - 1);
-      end;
-  end;
+  case vHasBoldBottom of   TRUE:  begin
+                                    vCanvas.moveTo(aRect.left, aRect.bottom - 1);
+                                    vCanvas.lineTo(aRect.right, aRect.bottom - 1); end;end;
 
   var vHasHyphenRight := FHyphenRight[vCol, vRow];
-  case vHasHyphenRight of
-    TRUE:
-      begin
-        vCanvas.pen.width := 2;
-        vCanvas.moveTo(aRect.right - 4, aRect.top + ((aRect.bottom - aRect.top) div 2));
-        vCanvas.lineTo(aRect.right, aRect.top + ((aRect.bottom - aRect.top) div 2));
-        vCanvas.pen.width := 1;
-      end;
-  end;
+  case vHasHyphenRight of  TRUE:  begin
+                                    vCanvas.pen.width := 2;
+                                    vCanvas.moveTo(aRect.right - 4, aRect.top + ((aRect.bottom - aRect.top) div 2));
+                                    vCanvas.lineTo(aRect.right, aRect.top + ((aRect.bottom - aRect.top) div 2));
+                                    vCanvas.pen.width := 1; end;end;
 
   var vPrevHasHyphenRight := FALSE;
-  case vCol > 1 of
-    TRUE: vPrevHasHyphenRight := FHyphenRight[vCol - 1, vRow];
-  end;
+  case vCol > 1 of   TRUE:  vPrevHasHyphenRight := FHyphenRight[vCol - 1, vRow]; end;
 
-  case vPrevHasHyphenRight of
-    TRUE:
-      begin
-        vCanvas.pen.width := 2;
-        vCanvas.moveTo(aRect.left, aRect.top + ((aRect.bottom - aRect.top) div 2));
-        vCanvas.lineTo(aRect.left + 4, aRect.top + ((aRect.bottom - aRect.top) div 2));
-        vCanvas.pen.width := 1;
-      end;
-  end;
+  case vPrevHasHyphenRight of  TRUE:  begin
+                                        vCanvas.pen.width := 2;
+                                        vCanvas.moveTo(aRect.left, aRect.top + ((aRect.bottom - aRect.top) div 2));
+                                        vCanvas.lineTo(aRect.left + 4, aRect.top + ((aRect.bottom - aRect.top) div 2));
+                                        vCanvas.pen.width := 1; end;end;
 
   var vHasHyphenBottom := FHyphenBottom[vCol, vRow];
-  case vHasHyphenBottom of
-    TRUE:
-      begin
-        vCanvas.pen.width := 2;
-        vCanvas.moveTo(aRect.left + ((aRect.right - aRect.left) div 2), aRect.bottom - 4);
-        vCanvas.lineTo(aRect.left + ((aRect.right - aRect.left) div 2), aRect.bottom);
-        vCanvas.pen.width := 1;
-      end;
-  end;
+  case vHasHyphenBottom of   TRUE:  begin
+                                      vCanvas.pen.width := 2;
+                                      vCanvas.moveTo(aRect.left + ((aRect.right - aRect.left) div 2), aRect.bottom - 4);
+                                      vCanvas.lineTo(aRect.left + ((aRect.right - aRect.left) div 2), aRect.bottom);
+                                      vCanvas.pen.width := 1; end;end;
 
   var vPrevHasHyphenBottom := FALSE;
-  case vRow > 1 of
-    TRUE: vPrevHasHyphenBottom := FHyphenBottom[vCol, vRow - 1];
-  end;
+  case vRow > 1 of   TRUE:  vPrevHasHyphenBottom := FHyphenBottom[vCol, vRow - 1]; end;
 
-  case vPrevHasHyphenBottom of
-    TRUE:
-      begin
-        vCanvas.pen.width := 2;
-        vCanvas.moveTo(aRect.left + ((aRect.right - aRect.left) div 2), aRect.top);
-        vCanvas.lineTo(aRect.left + ((aRect.right - aRect.left) div 2), aRect.top + 4);
-        vCanvas.pen.width := 1;
-      end;
-  end;
+  case vPrevHasHyphenBottom of   TRUE:  begin
+                                          vCanvas.pen.width := 2;
+                                          vCanvas.moveTo(aRect.left + ((aRect.right - aRect.left) div 2), aRect.top);
+                                          vCanvas.lineTo(aRect.left + ((aRect.right - aRect.left) div 2), aRect.top + 4);
+                                          vCanvas.pen.width := 1; end;end;
 
-  case vIsCellBlack of
-    TRUE: EXIT;
-  end;
+  case vIsCellBlack of   TRUE: EXIT; end;
 
   var vHasNumber := FNumbers[vCol, vRow] > 0;
-  case vHasNumber of
-    TRUE:
-      begin
-        vCanvas.font.name   := 'Arial';
-        vCanvas.font.size   := 8;
-        vCanvas.font.style  := [fsBold];
-        vCanvas.font.color  := clBlack;
-        vCanvas.brush.style := bsClear;
-        vCanvas.textOut(aRect.left + 2, aRect.top + 1, intToStr(FNumbers[vCol, vRow]));
-      end;
-  end;
+  case vHasNumber of   TRUE:  begin
+                                vCanvas.font.name   := 'Arial';
+                                vCanvas.font.size   := 8;
+                                vCanvas.font.style  := [fsBold];
+                                vCanvas.font.color  := clBlack;
+                                vCanvas.brush.style := bsClear;
+                                vCanvas.textOut(aRect.left + 2, aRect.top + 1, intToStr(FNumbers[vCol, vRow])); end;end;
 
   var vHasLetter := FLetters[vCol, vRow] <> #0;
-  case vHasLetter of
-    FALSE: EXIT;
-  end;
+  case vHasLetter of  FALSE: EXIT; end;
 
   vCanvas.font.name   := 'Arial';
   vCanvas.font.size   := 14;
