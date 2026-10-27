@@ -135,9 +135,9 @@ begin
                                       end;end;
       end;
 
-      case vEmptyCount > 0 of  TRUE:  vCombined := vCombined + intToStr(vEmptyCount); end;
+      case vEmptyCount > 0  of   TRUE:  vCombined := vCombined + intToStr(vEmptyCount); end;
 
-      case vRow < GRID_SIZE of   TRUE: vCombined := vCombined + '/'; end;
+      case vRow < GRID_SIZE of   TRUE:  vCombined := vCombined + '/'; end;
     end;
 
     vStringList.add(vCombined);
@@ -160,111 +160,65 @@ begin
     var vChar: char := aLayout[vIndex];
 
     var vIsLetter := vChar in ['A'..'Z'];
-    case vIsLetter of
-      TRUE:
-        begin
-          var vNumStrEmptyForLetter := (vNumStr = '');
-          case vNumStrEmptyForLetter of
-            FALSE:
-              begin
-                var vSpaceCount := strToInt(vNumStr);
-                for var vC := 1 to vSpaceCount do
-                begin
-                  FIsBlack[vCol, vRow] := FALSE;
-                  inc(vCol);
-                end;
-                vNumStr := '';
-              end;
-          end;
+    case vIsLetter of  TRUE:  begin
+                                var vNumStrEmptyForLetter := (vNumStr = '');
+                                case vNumStrEmptyForLetter of FALSE:  begin
+                                                                        var vSpaceCount := strToInt(vNumStr);
+                                                                        for var vC := 1 to vSpaceCount do begin
+                                                                                                            FIsBlack[vCol, vRow] := FALSE;
+                                                                                                            inc(vCol); end;
+                                                                        vNumStr := ''; end;end;
 
-          FLetters[vCol, vRow] := vChar;
-          inc(vCol);
-          CONTINUE;
-        end;
-    end;
+                                FLetters[vCol, vRow] := vChar;
+                                inc(vCol);
+                                CONTINUE; end;end;
 
     var vIsDigit := vChar in ['0'..'9'];
-    case vIsDigit of
-      TRUE:
-        begin
-          vNumStr := vNumStr + vChar;
-          CONTINUE;
-        end;
-    end;
+    case vIsDigit of   TRUE:  begin
+                                vNumStr := vNumStr + vChar;
+                                CONTINUE; end;end;
 
     var vNumStrEmpty := (vNumStr = '');
-    case vNumStrEmpty of
-      FALSE:
-        begin
-          var vSpaceCount := strToInt(vNumStr);
-          for var vC := 1 to vSpaceCount do
-          begin
-            FIsBlack[vCol, vRow] := FALSE;
-            inc(vCol);
-          end;
-          vNumStr := '';
-        end;
-    end;
+    case vNumStrEmpty of  FALSE:  begin
+                                    var vSpaceCount := strToInt(vNumStr);
+                                    for var vC := 1 to vSpaceCount do begin
+                                                                        FIsBlack[vCol, vRow] := FALSE;
+                                                                        inc(vCol); end;
+                                    vNumStr := ''; end;end;
 
     var vIsBlackBlock := (vChar = '.');
-    case vIsBlackBlock of
-      TRUE:
-        begin
-          FIsBlack[vCol, vRow] := TRUE;
-          inc(vCol);
-          CONTINUE;
-        end;
-    end;
+    case vIsBlackBlock of  TRUE:  begin
+                                    FIsBlack[vCol, vRow] := TRUE;
+                                    inc(vCol);
+                                    CONTINUE; end;end;
 
     var vIsSlash := vChar = '/';
-    case vIsSlash of
-      TRUE:
-        begin
-          vCol := 1;
-          inc(vRow);
-          CONTINUE;
-        end;
-    end;
+    case vIsSlash of   TRUE:  begin
+                                vCol := 1;
+                                inc(vRow);
+                                CONTINUE; end;end;
 
     var vIsModifier := vChar in ['|', '_', '-', '='];
-    case vIsModifier of
-      TRUE:
-        begin
-          var vIsBoldRight := vChar = '|';
-          case vIsBoldRight of
-            TRUE: FBoldRight[vCol - 1, vRow] := TRUE;
-          end;
+    case vIsModifier of  TRUE:  begin
+                                  var vIsBoldRight := vChar = '|';
+                                  case vIsBoldRight     of   TRUE:  FBoldRight[vCol - 1, vRow] := TRUE; end;
 
-          var vIsBoldBottom := vChar = '_';
-          case vIsBoldBottom of
-            TRUE: FBoldBottom[vCol - 1, vRow] := TRUE;
-          end;
+                                  var vIsBoldBottom := vChar = '_';
+                                  case vIsBoldBottom    of   TRUE:  FBoldBottom[vCol - 1, vRow] := TRUE; end;
 
-          var vIsHyphenRight := vChar = '-';
-          case vIsHyphenRight of
-            TRUE: FHyphenRight[vCol - 1, vRow] := TRUE;
-          end;
+                                  var vIsHyphenRight := vChar = '-';
+                                  case vIsHyphenRight   of   TRUE:  FHyphenRight[vCol - 1, vRow] := TRUE; end;
 
-          var vIsHyphenBottom := vChar = '=';
-          case vIsHyphenBottom of
-            TRUE: FHyphenBottom[vCol - 1, vRow] := TRUE;
-          end;
-        end;
-    end;
-  end;
+                                  var vIsHyphenBottom := vChar = '=';
+                                  case vIsHyphenBottom  of   TRUE:  FHyphenBottom[vCol - 1, vRow] := TRUE; end;
+                                end;end;end;
 
   var vNumStrEmptyFinal := (vNumStr = '');
-  case vNumStrEmptyFinal of
-    FALSE:
-      begin
-        var vSpaceCount := strToInt(vNumStr);
-        for var vC := 1 to vSpaceCount do
-        begin
-          FIsBlack[vCol, vRow] := FALSE;
-          inc(vCol);
-        end;
-      end;
-  end;
+  case vNumStrEmptyFinal of FALSE:  begin
+                                      var vSpaceCount := strToInt(vNumStr);
+                                      for var vC := 1 to vSpaceCount do begin
+                                                                          FIsBlack[vCol, vRow] := FALSE;
+                                                                          inc(vCol); end;end;end;
 
   calculateNumbers;
 end;
@@ -272,23 +226,16 @@ end;
 procedure TCrosswordGrid.addModifier(aCol, aRow: integer; aModifier: TGridModifier);
 begin
   var vIsBoldRight := aModifier = gmHorzWordBreak;
-  case vIsBoldRight of
-    TRUE: FBoldRight[aCol, aRow] := TRUE;
-  end;
+  case vIsBoldRight     of   TRUE:  FBoldRight[aCol, aRow] := TRUE; end;
 
   var vIsBoldBottom := aModifier = gmVertWordBreak;
-  case vIsBoldBottom of
-    TRUE: FBoldBottom[aCol, aRow] := TRUE;
-  end;
+  case vIsBoldBottom    of   TRUE:  FBoldBottom[aCol, aRow] := TRUE; end;
 
   var vIsHyphenRight := aModifier = gmHorzHyphen;
-  case vIsHyphenRight of
-    TRUE: FHyphenRight[aCol, aRow] := TRUE;
-  end;
+  case vIsHyphenRight   of   TRUE:  FHyphenRight[aCol, aRow] := TRUE; end;
 
   var vIsHyphenBottom := aModifier = gmVertHyphen;
-  case vIsHyphenBottom of
-    TRUE: FHyphenBottom[aCol, aRow] := TRUE;
+  case vIsHyphenBottom  of   TRUE:  FHyphenBottom[aCol, aRow] := TRUE;
   end;
 
   FCrosswordGrid.invalidate;
@@ -300,39 +247,23 @@ begin
   var vTargetCol  := 0;
   var vTargetRow  := 0;
 
-  for var vRow := 1 to GRID_SIZE do
-  begin
+  for var vRow := 1 to GRID_SIZE do begin
     for var vCol := 1 to GRID_SIZE do
-    begin
-      case FNumbers[vCol, vRow] = aClueNumber of
-        TRUE:
-          begin
-            vFound := TRUE;
-            var vIsAcross := aDirection = cdAcross;
-            case vIsAcross of
-              TRUE:
-                begin
-                  vTargetCol := vCol + aLetterPosition - 1;
-                  vTargetRow := vRow;
-                end;
-              FALSE:
-                begin
-                  vTargetCol := vCol;
-                  vTargetRow := vRow + aLetterPosition - 1;
-                end;
-            end;
-            BREAK;
-          end;
-      end;
-    end;
-    case vFound of
-      TRUE: BREAK;
-    end;
-  end;
+      case FNumbers[vCol, vRow] = aClueNumber of   TRUE:  begin
+                                                            vFound := TRUE;
+                                                            var vIsAcross := aDirection = cdAcross;
+                                                            case vIsAcross of  TRUE:  begin
+                                                                                        vTargetCol := vCol + aLetterPosition - 1;
+                                                                                        vTargetRow := vRow; end;
+                                                                              FALSE:  begin
+                                                                                        vTargetCol := vCol;
+                                                                                        vTargetRow := vRow + aLetterPosition - 1; end;end;
+                                                            BREAK;
+                                                          end;end;
 
-  case vFound of
-    FALSE: EXIT;
-  end;
+                                                          case vFound of   TRUE: BREAK; end;end;
+
+  case vFound of  FALSE: EXIT; end;
 
   addModifier(vTargetCol, vTargetRow, aModifier);
 end;
@@ -340,24 +271,17 @@ end;
 procedure TCrosswordGrid.applySetupModifier(aCol, aRow: integer; aKey: char);
 begin
   var vIsBoldRight := aKey = '|';
-  case vIsBoldRight of
-    TRUE: FBoldRight[aCol, aRow] := NOT FBoldRight[aCol, aRow];
-  end;
+  case vIsBoldRight     of   TRUE:  FBoldRight[aCol, aRow] := NOT FBoldRight[aCol, aRow]; end;
 
   var vIsBoldBottom := aKey = '_';
-  case vIsBoldBottom of
-    TRUE: FBoldBottom[aCol, aRow] := NOT FBoldBottom[aCol, aRow];
-  end;
+  case vIsBoldBottom    of   TRUE:  FBoldBottom[aCol, aRow] := NOT FBoldBottom[aCol, aRow]; end;
 
   var vIsHyphenRight := aKey = '-';
-  case vIsHyphenRight of
-    TRUE: FHyphenRight[aCol, aRow] := NOT FHyphenRight[aCol, aRow];
+  case vIsHyphenRight   of   TRUE:  FHyphenRight[aCol, aRow] := NOT FHyphenRight[aCol, aRow];
   end;
 
   var vIsHyphenBottom := aKey = '=';
-  case vIsHyphenBottom of
-    TRUE: FHyphenBottom[aCol, aRow] := NOT FHyphenBottom[aCol, aRow];
-  end;
+  case vIsHyphenBottom  of   TRUE:  FHyphenBottom[aCol, aRow] := NOT FHyphenBottom[aCol, aRow]; end;
 
   FCrosswordGrid.invalidate;
 end;
@@ -365,14 +289,10 @@ end;
 procedure TCrosswordGrid.arrayGrid(const aLines: array of string);
 begin
   var vCombined := '';
-  for var vIndex := low(aLines) to high(aLines) do
-  begin
-    var vHasContent := vCombined <> '';
-    case vHasContent of
-      TRUE: vCombined := vCombined + '/';
-    end;
-    vCombined := vCombined + aLines[vIndex];
-  end;
+  for var vIndex := low(aLines) to high(aLines) do  begin
+                                                      var vHasContent := vCombined <> '';
+                                                      case vHasContent of  TRUE: vCombined := vCombined + '/'; end;
+                                                      vCombined := vCombined + aLines[vIndex]; end;
   setupGrid(vCombined);
 end;
 
@@ -380,55 +300,36 @@ procedure TCrosswordGrid.calculateNumbers;
 begin
   var vNum := 1;
   for var vRow := 1 to GRID_SIZE do
-  begin
-    for var vCol := 1 to GRID_SIZE do
-    begin
+    for var vCol := 1 to GRID_SIZE do begin
       FNumbers[vCol, vRow] := 0;
       var vIsCellBlack := FIsBlack[vCol, vRow];
-      case vIsCellBlack of
-        TRUE: CONTINUE;
-      end;
+      case vIsCellBlack of TRUE: CONTINUE; end;
 
       var vHasLeft := FALSE;
-      case vCol > 1 of
-        TRUE: vHasLeft := NOT FIsBlack[vCol - 1, vRow];
-      end;
+      case vCol > 1           of   TRUE:  vHasLeft    := NOT FIsBlack[vCol - 1, vRow]; end;
 
       var vHasRight := FALSE;
-      case vCol < GRID_SIZE of
-        TRUE: vHasRight := NOT FIsBlack[vCol + 1, vRow];
-      end;
+      case vCol < GRID_SIZE   of   TRUE:  vHasRight   := NOT FIsBlack[vCol + 1, vRow]; end;
 
       var vHasTop := FALSE;
-      case vRow > 1 of
-        TRUE: vHasTop := NOT FIsBlack[vCol, vRow - 1];
-      end;
+      case vRow > 1           of   TRUE:  vHasTop     := NOT FIsBlack[vCol, vRow - 1]; end;
 
       var vHasBottom := FALSE;
-      case vRow < GRID_SIZE of
-        TRUE: vHasBottom := NOT FIsBlack[vCol, vRow + 1];
-      end;
+      case vRow < GRID_SIZE   of   TRUE:  vHasBottom  := NOT FIsBlack[vCol, vRow + 1]; end;
 
       var vNeedsAcrossNum := vHasRight and (NOT vHasLeft);
       var vNeedsDownNum := vHasBottom and (NOT vHasTop);
 
-      case vNeedsAcrossNum or vNeedsDownNum of
-        TRUE:
-          begin
-            FNumbers[vCol, vRow] := vNum;
-            inc(vNum);
-          end;
-      end;
+      case vNeedsAcrossNum or vNeedsDownNum of   TRUE:  begin
+                                                          FNumbers[vCol, vRow] := vNum;
+                                                          inc(vNum); end;end;
     end;
-  end;
 end;
 
 procedure TCrosswordGrid.clearGrid;
 begin
   for var vRow := 1 to GRID_SIZE do
-  begin
-    for var vCol := 1 to GRID_SIZE do
-    begin
+    for var vCol := 1 to GRID_SIZE do  begin
       FIsBlack      [vCol, vRow]  := FALSE;
       FNumbers      [vCol, vRow]  := 0;
       FLetters      [vCol, vRow]  := #0;
@@ -437,7 +338,6 @@ begin
       FHyphenRight  [vCol, vRow]  := FALSE;
       FHyphenBottom [vCol, vRow]  := FALSE;
     end;
-  end;
 end;
 
 procedure TCrosswordGrid.gridDrawCell(sender: TObject; aCol, aRow: integer; aRect: TRect; aState: TGridDrawState);
