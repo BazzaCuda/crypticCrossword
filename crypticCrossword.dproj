@@ -126,6 +126,7 @@
         <DCCReference Include="mainUnit.pas">
             <Form>MainForm</Form>
         </DCCReference>
+        <DCCReference Include="TCrosswordGridClass.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
