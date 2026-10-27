@@ -1,7 +1,7 @@
-// crypticCrossword.dpr
 program crypticCrossword;
 
 uses
+  system.sysUtils,
   vcl.forms,
   mainUnit in 'mainUnit.pas' {MainForm};
 
@@ -11,43 +11,43 @@ begin
   application.initialize;
   application.mainFormOnTaskbar := TRUE;
   application.createForm(TMainForm, mainForm);
-//  mainForm.setupGrid('15/1B1B1B1B1B1B1B1/15/1B1B1B1B1B1B1B1/7B7/1B1B1B1B1B1B1B1/15/B1B1B1B1B1B1B/15/1B1B1B1B1B1B1B1/7B7/1B1B1B1B1B1B1B1/15/1B1B1B1B1B1B1B1/15');
-//  mainForm.setupGrid('5B9/1B1B1B1B1B1B1B1/9B5/1BBB1B1_B1B1B1_B1/13BB/1B1B1B1BBB1B1B1/4B2-2|2|4/1B1B1B1B1B1B1B1/10B4/1B1B1BBB1B1B1B1=/BB13/1B1B1B1B1B1BBB1/5B9/1B1B1B1B1B1B1B1/9B5');
+//  mainForm.setupGrid('15/1.1.1.1.1.1.1.1/15/1.1.1.1.1.1.1.1/7.7/1.1.1.1.1.1.1.1/15/.1.1.1.1.1.1./15/1.1.1.1.1.1.1.1/7.7/1.1.1.1.1.1.1.1/15/1.1.1.1.1.1.1.1/15');
+//  mainForm.setupGrid('5.9/1.1.1.1.1.1.1.1/9.5/1...1.1_.1.1.1_.1/13../1.1.1.1...1.1.1/4.2-2|2|4/1.1.1.1.1.1.1.1/10.4/1.1.1...1.1.1.1=/..13/1.1.1.1.1.1...1/5.9/1.1.1.1.1.1.1.1/9.5');
 
 //  mainForm.arrayGrid([
-//    '5B9',
-//    '1B1B1B1B1B1B1B1',
-//    '9B5',
-//    '1BBB1B1_B1B1B1_B1',
-//    '13BB',
-//    '1B1B1B1BBB1B1B1',
-//    '4B2-2|2|4',
-//    '1B1B1B1B1B1B1B1',
-//    '10B4',
-//    '1B1B1BBB1B1B1B1=',
-//    'BB13',
-//    '1B1B1B1B1B1BBB1',
-//    '5B9',
-//    '1B1B1B1B1B1B1B1',
-//    '9B5'
+//    '5.9',
+//    '1.1.1.1.1.1.1.1',
+//    '9.5',
+//    '1...1.1_.1.1.1_.1',
+//    '13..',
+//    '1.1.1.1...1.1.1',
+//    '4.2-2|2|4',
+//    '1.1.1.1.1.1.1.1',
+//    '10.4',
+//    '1.1.1...1.1.1.1=',
+//    '..13',
+//    '1.1.1.1.1.1...1',
+//    '5.9',
+//    '1.1.1.1.1.1.1.1',
+//    '9.5'
 //  ]);
 
   mainForm.arrayGrid([
-    '5B9',
-    '1B1B1B1B1B1B1B1',
-    '9B5',
-    '1BBB1B1B1B1B1B1',
-    '13BB',
-    '1B1B1B1BBB1B1B1',
-    '4B10',
-    '1B1B1B1B1B1B1B1',
-    '10B4',
-    '1B1B1BBB1B1B1B1',
-    'BB13',
-    '1B1B1B1B1B1BBB1',
-    '5B9',
-    '1B1B1B1B1B1B1B1',
-    '9B5'
+    '5.9',
+    '1.1.1.1.1.1.1.1',
+    '9.5',
+    '1...1.1.1.1.1.1',
+    '13..',
+    '1.1.1.1...1.1.1',
+    '4.10',
+    '1.1.1.1.1.1.1.1',
+    '10.4',
+    '1.1.1...1.1.1.1',
+    '..13',
+    '1.1.1.1.1.1...1',
+    '5.9',
+    '1.1.1.1.1.1.1.1',
+    '9.5'
   ]);
 
   mainForm.addModifierByClue(15, cdAcross, 4, gmHorzWordBreak);
@@ -56,6 +56,10 @@ begin
   mainForm.addModifierByClue(3, cdDown, 1, gmVertWordBreak);
   mainForm.addModifierByClue(4, cdAcross, 4, gmHorzHyphen);
   mainForm.addModifierByClue(4, cdDown, 4, gmVertHyphen);
+
+  mainForm.setupGrid('5_.4-5/1.1.1.1.1.1.1.1/9.5/1...1.1=.1.1.1.1/BUTTERFINGERS../1.1.1.1...1.1.1/4.4|2|4/1.1.1.1.1.1.1.1/10.4/1.1.1...1.1.1.1/..13/1.1.1.1.1.1...1/5.9/1.1.1.1.1.1.1.1/4|5.5');
+
+  mainForm.readSavedGrid(extractFilePath(paramStr(0)) + 'crypticCrossword.txt', 0);
 
   application.run;
 end.
