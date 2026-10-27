@@ -7,7 +7,9 @@ uses
   system.classes, vcl.graphics, vcl.controls, vcl.forms, vcl.dialogs,
   vcl.grids, vcl.extCtrls, system.types, system.uiTypes;
 
-const GRID_SIZE = 15;
+const
+  GRID_SIZE = 15;
+  SETUP = TRUE;
 
 type
   TClueDirection = (cdAcross, cdDown);
@@ -29,11 +31,13 @@ type
     procedure gridDrawCell(sender: TObject; aCol, aRow: integer; aRect: TRect; aState: TGridDrawState);
     procedure gridKeyPress(sender: TObject; var aKey: char);
     procedure gridKeyDown(sender: TObject; var aKey: word; aShift: TShiftState);
+    procedure gridMouseDown(sender: TObject; button: TMouseButton; shift: TShiftState; x, y: integer);
     procedure calculateNumbers;
   public
     constructor create(aOwner: TComponent); override;
     procedure addModifier(aCol: integer; aRow: integer; aModifier: TGridModifier);
     procedure addModifierByClue(aClueNumber: integer; aDirection: TClueDirection; aLetterPosition: integer; aModifier: TGridModifier);
+    procedure applySetupModifier(aCol: integer; aRow: integer; aKey: char);
     procedure arrayGrid(const aLines: array of string);
     procedure clearGrid;
     procedure readSavedGrid(const aFilename: string; aIndex: integer);
@@ -86,15 +90,17 @@ begin
   FCrosswordGrid.borderStyle      := bsNone;
   FCrosswordGrid.defaultDrawing   := FALSE;
 
-  FCrosswordGrid.onDrawCell := gridDrawCell;
-  FCrosswordGrid.onKeyPress := gridKeyPress;
-  FCrosswordGrid.onKeyDown  := gridKeyDown;
+  FCrosswordGrid.onDrawCell   := gridDrawCell;
+  FCrosswordGrid.onKeyPress   := gridKeyPress;
+  FCrosswordGrid.onKeyDown    := gridKeyDown;
+  FCrosswordGrid.onMouseDown  := gridMouseDown;
 end;
 
 procedure TMainForm.saveGridToFile(const aFilename: string);
 begin
   var vStringList := TStringList.create;
   try
+    case fileExists(aFileName) of TRUE: vStringList.loadFromFile(aFileName); end;
     var vCombined := '';
     for var vRow := 0 to 14 do
     begin
@@ -349,6 +355,31 @@ begin
   addModifier(vTargetCol, vTargetRow, aModifier);
 end;
 
+procedure TMainForm.applySetupModifier(aCol, aRow: integer; aKey: char);
+begin
+  var vIsBoldRight := aKey = '|';
+  case vIsBoldRight of
+    TRUE: FBoldRight[aCol, aRow] := NOT FBoldRight[aCol, aRow];
+  end;
+
+  var vIsBoldBottom := aKey = '_';
+  case vIsBoldBottom of
+    TRUE: FBoldBottom[aCol, aRow] := NOT FBoldBottom[aCol, aRow];
+  end;
+
+  var vIsHyphenRight := aKey = '-';
+  case vIsHyphenRight of
+    TRUE: FHyphenRight[aCol, aRow] := NOT FHyphenRight[aCol, aRow];
+  end;
+
+  var vIsHyphenBottom := aKey = '=';
+  case vIsHyphenBottom of
+    TRUE: FHyphenBottom[aCol, aRow] := NOT FHyphenBottom[aCol, aRow];
+  end;
+
+  FCrosswordGrid.invalidate;
+end;
+
 procedure TMainForm.arrayGrid(const aLines: array of string);
 begin
   var vCombined := '';
@@ -590,6 +621,17 @@ begin
     TRUE: EXIT;
   end;
 
+  var vIsModifier := aKey in ['|', '_', '-', '='];
+  var vIsSetupAndModifier := SETUP AND vIsModifier;
+
+  case vIsSetupAndModifier of
+    TRUE:
+      begin
+        applySetupModifier(vCol, vRow, aKey);
+        EXIT;
+      end;
+  end;
+
   var vIsLetter := aKey in ['a'..'z', 'A'..'Z'];
   var vIsBackspace := aKey = #8;
 
@@ -656,6 +698,43 @@ begin
       end;
   end;
 
+  FCrosswordGrid.invalidate;
+end;
+
+procedure TMainForm.gridMouseDown(sender: TObject; button: TMouseButton; shift: TShiftState; x, y: integer);
+begin
+  case SETUP of
+    FALSE: EXIT;
+  end;
+
+  var vCol := -1;
+  var vRow := -1;
+  FCrosswordGrid.mouseToCell(x, y, vCol, vRow);
+
+  var vIsValidCell := (vCol >= 0) AND (vRow >= 0);
+  case vIsValidCell of
+    FALSE: EXIT;
+  end;
+
+  var vIsLeftClick := button = mbLeft;
+  case vIsLeftClick of
+    TRUE: FIsBlack[vCol, vRow] := FALSE;
+  end;
+
+  var vIsRightClick := button = mbRight;
+  case vIsRightClick of
+    TRUE:
+      begin
+        FIsBlack[vCol, vRow] := TRUE;
+        FLetters[vCol, vRow] := #0;
+        FBoldRight[vCol, vRow] := FALSE;
+        FBoldBottom[vCol, vRow] := FALSE;
+        FHyphenRight[vCol, vRow] := FALSE;
+        FHyphenBottom[vCol, vRow] := FALSE;
+      end;
+  end;
+
+  calculateNumbers;
   FCrosswordGrid.invalidate;
 end;
 
