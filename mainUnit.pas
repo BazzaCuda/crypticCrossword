@@ -27,6 +27,7 @@ type
     procedure calculateNumbers;
   public
     constructor create(aOwner: TComponent); override;
+    procedure arrayGrid(const aLines: array of string);
     procedure setupGrid(const aLayout: string);
   end;
 
@@ -44,7 +45,7 @@ begin
   SELF.clientwidth := 550;
   SELF.clientheight := 550;
   SELF.position := poScreenCenter;
-  SELF.color := clWhite;
+  SELF.color := clWhite - $101010;
 
   FAcrossDirection := TRUE;
 
@@ -194,85 +195,19 @@ begin
   calculateNumbers;
 end;
 
-//procedure TMainForm.setupGrid(const aLayout: string);
-//var
-//  vChar: char;
-//  vIndex: integer;
-//  vCol, vRow: integer;
-//  vNumStr: string;
-//  vSpaceCount: integer;
-//  vC: integer;
-//  vNumStrEmpty: boolean;
-//  vIsDigit: boolean;
-//  vIsBlackBlock: boolean;
-//  vIsSlash: boolean;
-//begin
-//  vCol := 0;
-//  vRow := 0;
-//  vNumStr := '';
-//
-//  for vIndex := 1 to length(aLayout) do
-//  begin
-//    vChar := aLayout[vIndex];
-//
-//    vIsDigit := vChar in ['0'..'9'];
-//    case vIsDigit of
-//      TRUE:
-//        begin
-//          vNumStr := vNumStr + vChar;
-//          CONTINUE;
-//        end;
-//    end;
-//
-//    vNumStrEmpty := (vNumStr = '');
-//    case vNumStrEmpty of
-//      FALSE:
-//        begin
-//          vSpaceCount := strToInt(vNumStr);
-//          for vC := 1 to vSpaceCount do
-//          begin
-//            FIsBlack[vCol, vRow] := FALSE;
-//            inc(vCol);
-//          end;
-//          vNumStr := '';
-//        end;
-//    end;
-//
-//    vIsBlackBlock := (vChar = 'B') or (vChar = 'b');
-//    case vIsBlackBlock of
-//      TRUE:
-//        begin
-//          FIsBlack[vCol, vRow] := TRUE;
-//          inc(vCol);
-//          CONTINUE;
-//        end;
-//    end;
-//
-//    vIsSlash := vChar = '/';
-//    case vIsSlash of
-//      TRUE:
-//        begin
-//          vCol := 0;
-//          inc(vRow);
-//        end;
-//    end;
-//  end;
-//
-//  vNumStrEmpty := (vNumStr = '');
-//  case vNumStrEmpty of
-//    FALSE:
-//      begin
-//        vSpaceCount := strToInt(vNumStr);
-//        for vC := 1 to vSpaceCount do
-//        begin
-//          FIsBlack[vCol, vRow] := FALSE;
-//          inc(vCol);
-//        end;
-//      end;
-//  end;
-//
-//  calculateNumbers;
-//end;
+procedure TMainForm.arrayGrid(const aLines: array of string);
+begin
+  var vCombined := '';
+  for var vIndex := low(aLines) to high(aLines) do
+  begin
+    var vHasContent := vCombined <> '';
+    case vHasContent of
+      TRUE: vCombined := vCombined + '/';
+    end;
+    vCombined := vCombined + aLines[vIndex];
+  end;
+  setupGrid(vCombined);
+end;
 
 procedure TMainForm.calculateNumbers;
 var
@@ -379,7 +314,7 @@ begin
       end;
   end;
 
-var vHasBoldRight := FBoldRight[aCol, aRow];
+  var vHasBoldRight := FBoldRight[aCol, aRow];
   case vHasBoldRight of
     TRUE:
       begin
@@ -472,7 +407,7 @@ var vHasBoldRight := FBoldRight[aCol, aRow];
   end;
 
   vCanvas.font.name := 'Arial';
-  vCanvas.font.size := 15;
+  vCanvas.font.size := 14;
   vCanvas.font.style := [fsBold];
   vCanvas.font.color := clBlack;
   vCanvas.brush.style := bsClear;
