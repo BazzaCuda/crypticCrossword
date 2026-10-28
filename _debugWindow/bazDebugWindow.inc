@@ -1,0 +1,1 @@
+const BazDebugWindow = TRUE;

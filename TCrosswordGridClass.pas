@@ -8,8 +8,8 @@ uses
   vcl.controls, vcl.dialogs, vcl.extCtrls, vcl.forms, vcl.graphics, vcl.grids;
 
 const
-  GRID_SIZE = 15;
-  SETUP     = FALSE;
+  GRID_SIZE   = 15;
+  GRID_SETUP  = FALSE;
 
 type
   void            = record end;
@@ -17,17 +17,28 @@ type
   TGridModifier   = (gmHorzWordBreak, gmVertWordBreak, gmHorzHyphen, gmVertHyphen);
 
   ICrosswordGrid = interface
-    procedure addModifier(aCol: integer; aRow: integer; aModifier: TGridModifier);
-    procedure addModifierByClue(aClueNumber: integer; aDirection: TClueDirection; aLetterPosition: integer; aModifier: TGridModifier);
-    procedure applySetupModifier(aCol: integer; aRow: integer; aKey: char);
-    procedure arrayGrid(const aLines: array of string);
-    procedure clearGrid;
+    function  addModifier(aCol: integer; aRow: integer; aModifier: TGridModifier): void;
+    function  addModifierByClue(aClueNumber: integer; aDirection: TClueDirection; aLetterPosition: integer; aModifier: TGridModifier): void;
+    function  applySetupModifier(aCol: integer; aRow: integer; aKey: char): void;
+    function  arrayGrid(const aLines: array of string): void;
+    function  clearGrid: void;
     function  isDirty: boolean;
-    procedure readSavedGrid(const aFilename: string; aIndex: integer);
-    procedure saveGridToFile(const aFilename: string);
-    procedure setupGrid(const aLayout: string);
+    function  readSavedGrid(const aFilename: string; aIndex: integer): void;
+    function  saveGridToFile(const aFilename: string): void;
+    function  setupGrid(const aLayout: string): void;
   end;
 
+function newCrosswordGrid(const aParent: TWinControl): ICrosswordGrid;
+
+implementation
+
+uses
+  _debugWindow;
+
+const
+  KEY_BACKSPACE =  #8;
+
+type
   TCrosswordGrid = class(TInterfacedObject, ICrosswordGrid)
   private
     FCrosswordGrid:   TDrawGrid;
@@ -43,45 +54,47 @@ type
     FAcrossDirection: boolean;
     FIsDirty:         boolean;
 
+    { TCrosswordGrid }
+    function  advanceCursor(aCol: integer; aRow: integer): void;
+    function  calculateNumbers: void;
+    function  encodeRow(aRow: integer): string;
+    function  fillBlanks(var aCol: integer; aRow: integer; var aNumStr: string): void;
+    function  needsNumber(aCol: integer; aRow: integer): boolean;
+    function  retreatCursor(aCol: integer; aRow: integer): void;
+
+    { draw methods }
+    function  drawBackground  (aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect): void;
+    function  drawBorders     (aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect): void;
+    function  drawHyphens     (aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect): void;
+    function  drawContent     (aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect): void;
+
+    { TDrawGrid event handlers }
     procedure gridDrawCell(sender: TObject; aCol: integer; aRow: integer; aRect: TRect; aState: TGridDrawState);
-    procedure gridKeyPress(sender: TObject; var aKey: char);
     procedure gridKeyDown(sender: TObject; var aKey: word; aShift: TShiftState);
+    procedure gridKeyPress(sender: TObject; var aKey: char);
     procedure gridMouseDown(sender: TObject; button: TMouseButton; shift: TShiftState; X: integer; Y: integer);
 
-    procedure advanceCursor(aCol: integer; aRow: integer);
-    procedure retreatCursor(aCol: integer; aRow: integer);
-    procedure calculateNumbers;
-    procedure fillBlanks(var aCol: integer; aRow: integer; var aNumStr: string);
-    function  needsNumber(aCol: integer; aRow: integer): boolean;
-    function  encodeRow(aRow: integer): string;
-
-    procedure drawBackground(aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect);
-    procedure drawBorders(aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect);
-    procedure drawHyphens(aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect);
-    procedure drawContent(aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect);
   public
-    constructor create(const aParent: TWinControl);
-    procedure addModifier(aCol: integer; aRow: integer; aModifier: TGridModifier);
-    procedure addModifierByClue(aClueNumber: integer; aDirection: TClueDirection; aLetterPosition: integer; aModifier: TGridModifier);
-    procedure applySetupModifier(aCol: integer; aRow: integer; aKey: char);
-    procedure arrayGrid(const aLines: array of string);
-    procedure clearGrid;
+    constructor Create(const aParent: TWinControl);
+
+    { ICrosswordGrid }
+    function  addModifier(aCol: integer; aRow: integer; aModifier: TGridModifier): void;
+    function  addModifierByClue(aClueNumber: integer; aDirection: TClueDirection; aLetterPosition: integer; aModifier: TGridModifier): void;
+    function  applySetupModifier(aCol: integer; aRow: integer; aKey: char): void;
+    function  arrayGrid(const aLines: array of string): void;
+    function  clearGrid: void;
     function  isDirty: boolean;
-    procedure readSavedGrid(const aFilename: string; aIndex: integer);
-    procedure saveGridToFile(const aFilename: string);
-    procedure setupGrid(const aLayout: string);
+    function  readSavedGrid(const aFilename: string; aIndex: integer): void;
+    function  saveGridToFile(const aFilename: string): void;
+    function  setupGrid(const aLayout: string): void;
   end;
-
-function newCrosswordGrid(const aParent: TWinControl): ICrosswordGrid;
-
-implementation
 
 function newCrosswordGrid(const aParent: TWinControl): ICrosswordGrid;
 begin
   result := TCrosswordGrid.create(aParent);
 end;
 
-constructor TCrosswordGrid.create(const aParent: TWinControl);
+constructor TCrosswordGrid.Create(const aParent: TWinControl);
 begin
   inherited create;
   FAcrossDirection  := TRUE;
@@ -107,41 +120,100 @@ begin
   FCrosswordGrid.onMouseDown      := gridMouseDown;
 end;
 
-function TCrosswordGrid.encodeRow(aRow: integer): string;
+{ ICrosswordGrid }
+
+function  TCrosswordGrid.addModifier(aCol, aRow: integer; aModifier: TGridModifier): void;
 begin
-  result := '';
-  var vEmptyCount := 0;
+  FBoldRight    [aCol, aRow]  := FBoldRight     [aCol, aRow]  OR (aModifier = gmHorzWordBreak);
+  FBoldBottom   [aCol, aRow]  := FBoldBottom    [aCol, aRow]  OR (aModifier = gmVertWordBreak);
+  FHyphenRight  [aCol, aRow]  := FHyphenRight   [aCol, aRow]  OR (aModifier = gmHorzHyphen);
+  FHyphenBottom [aCol, aRow]  := FHyphenBottom  [aCol, aRow]  OR (aModifier = gmVertHyphen);
 
-  for var vCol := 1 to GRID_SIZE do begin
-    var vIsCellBlack := FIsBlack[vCol, aRow];
-    var vHasLetter   := FLetters[vCol, aRow] <> #0;
-    var vHasModifier := FBoldRight[vCol, aRow] OR FBoldBottom[vCol, aRow] OR FHyphenRight[vCol, aRow] OR FHyphenBottom[vCol, aRow];
-
-    case (NOT vIsCellBlack) AND (NOT vHasLetter) of TRUE: inc(vEmptyCount); end;
-
-    case (vIsCellBlack OR vHasLetter) AND (vEmptyCount > 0) of TRUE: begin
-      result := result + intToStr(vEmptyCount);
-      vEmptyCount := 0;
-    end;end;
-
-    case vIsCellBlack of TRUE: result := result + '.'; end;
-    case vHasLetter AND (NOT vIsCellBlack) of TRUE: result := result + FLetters[vCol, aRow]; end;
-
-    case vHasModifier AND (vEmptyCount > 0) of TRUE: begin
-      result := result + intToStr(vEmptyCount);
-      vEmptyCount := 0;
-    end;end;
-
-    case FBoldRight[vCol, aRow]    of TRUE: result := result + '|'; end;
-    case FBoldBottom[vCol, aRow]   of TRUE: result := result + '_'; end;
-    case FHyphenRight[vCol, aRow]  of TRUE: result := result + '-'; end;
-    case FHyphenBottom[vCol, aRow] of TRUE: result := result + '='; end;
-  end;
-
-  case vEmptyCount > 0 of TRUE: result := result + intToStr(vEmptyCount); end;
+  FCrosswordGrid.invalidate;
 end;
 
-procedure TCrosswordGrid.saveGridToFile(const aFilename: string);
+function  TCrosswordGrid.addModifierByClue(aClueNumber: integer; aDirection: TClueDirection; aLetterPosition: integer; aModifier: TGridModifier): void;
+begin
+  var vFound     := FALSE;
+  var vTargetCol := 0;
+  var vTargetRow := 0;
+
+  for var vRow := 1 to GRID_SIZE do
+    for var vCol := 1 to GRID_SIZE do begin
+      var vIsMatch := (FNumbers[vCol, vRow] = aClueNumber) AND (NOT vFound);
+
+      case vIsMatch AND (aDirection = cdAcross) of TRUE: begin
+        vTargetCol := vCol + aLetterPosition - 1;
+        vTargetRow := vRow;
+        vFound := TRUE;
+      end;end;
+
+      case vIsMatch AND (aDirection = cdDown) of TRUE: begin
+        vTargetCol := vCol;
+        vTargetRow := vRow + aLetterPosition - 1;
+        vFound := TRUE;
+      end;end;
+    end;
+
+
+  case vFound of TRUE: addModifier(vTargetCol, vTargetRow, aModifier); end;
+end;
+
+function  TCrosswordGrid.applySetupModifier(aCol, aRow: integer; aKey: char): void;
+begin
+  FBoldRight[aCol, aRow]    := FBoldRight[aCol, aRow]    XOR (aKey = '|');
+  FBoldBottom[aCol, aRow]   := FBoldBottom[aCol, aRow]   XOR (aKey = '_');
+  FHyphenRight[aCol, aRow]  := FHyphenRight[aCol, aRow]  XOR (aKey = '-');
+  FHyphenBottom[aCol, aRow] := FHyphenBottom[aCol, aRow] XOR (aKey = '=');
+
+  FCrosswordGrid.invalidate;
+end;
+
+function  TCrosswordGrid.arrayGrid(const aLines: array of string): void;
+begin
+  var vCombined := '';
+  for var vIndex := low(aLines) to high(aLines) do begin
+    case vCombined <> '' of TRUE: vCombined := vCombined + '/'; end;
+    vCombined := vCombined + aLines[vIndex];
+  end;
+  setupGrid(vCombined);
+end;
+
+function  TCrosswordGrid.clearGrid;
+begin
+  for var vRow := 1 to GRID_SIZE do
+    for var vCol := 1 to GRID_SIZE do begin
+      FIsBlack[vCol, vRow]      := FALSE;
+      FNumbers[vCol, vRow]      := 0;
+      FLetters[vCol, vRow]      := #0;
+      FBoldRight[vCol, vRow]    := FALSE;
+      FBoldBottom[vCol, vRow]   := FALSE;
+      FHyphenRight[vCol, vRow]  := FALSE;
+      FHyphenBottom[vCol, vRow] := FALSE;
+    end;
+end;
+
+function TCrosswordGrid.isDirty: boolean;
+begin
+  result := FIsDirty;
+end;
+
+function  TCrosswordGrid.readSavedGrid(const aFilename: string; aIndex: integer): void;
+begin
+  case fileExists(aFilename) of FALSE: EXIT; end;
+
+  var vStringList := TStringList.create;
+  try
+    vStringList.loadFromFile(aFilename);
+    case aIndex = -1 of TRUE: aIndex := vStringList.count - 1; end;
+
+    case (aIndex >= 0) AND (aIndex < vStringList.count) of TRUE: setupGrid(vStringList[aIndex]); end;
+  finally
+    vStringList.free;
+  end;
+end;
+
+function  TCrosswordGrid.saveGridToFile(const aFilename: string): void;
 begin
   var vStringList := TStringList.create;
   try
@@ -160,20 +232,7 @@ begin
   end;
 end;
 
-procedure TCrosswordGrid.fillBlanks(var aCol: integer; aRow: integer; var aNumStr: string);
-begin
-  case aNumStr = '' of TRUE: EXIT; end;
-
-  var vSpaceCount := strToInt(aNumStr);
-  for var vC := 1 to vSpaceCount do begin
-    FIsBlack[aCol, aRow] := FALSE;
-    inc(aCol);
-  end;
-
-  aNumStr := '';
-end;
-
-procedure TCrosswordGrid.setupGrid(const aLayout: string);
+function  TCrosswordGrid.setupGrid(const aLayout: string): void;
 begin
   clearGrid;
 
@@ -220,61 +279,80 @@ begin
   calculateNumbers;
 end;
 
-procedure TCrosswordGrid.addModifier(aCol, aRow: integer; aModifier: TGridModifier);
-begin
-  FBoldRight    [aCol, aRow]  := FBoldRight     [aCol, aRow]  OR (aModifier = gmHorzWordBreak);
-  FBoldBottom   [aCol, aRow]  := FBoldBottom    [aCol, aRow]  OR (aModifier = gmVertWordBreak);
-  FHyphenRight  [aCol, aRow]  := FHyphenRight   [aCol, aRow]  OR (aModifier = gmHorzHyphen);
-  FHyphenBottom [aCol, aRow]  := FHyphenBottom  [aCol, aRow]  OR (aModifier = gmVertHyphen);
+{ TCrosswordGrid }
 
-  FCrosswordGrid.invalidate;
+function TCrosswordGrid.advanceCursor(aCol, aRow: integer): void;
+begin
+  var vCanMoveRight := (aCol < GRID_SIZE) AND (NOT FIsBlack[aCol + 1, aRow]);
+  var vCanMoveDown  := (aRow < GRID_SIZE) AND (NOT FIsBlack[aCol, aRow + 1]);
+
+  var vMoveRight := (FAcrossDirection AND vCanMoveRight) OR (NOT FAcrossDirection AND NOT vCanMoveDown AND vCanMoveRight);
+  var vMoveDown  := (NOT FAcrossDirection AND vCanMoveDown) OR (FAcrossDirection AND NOT vCanMoveRight AND vCanMoveDown);
+
+  case vMoveRight of TRUE: FCrosswordGrid.col := FCrosswordGrid.col + 1; end;
+  case vMoveDown  of TRUE: FCrosswordGrid.row := FCrosswordGrid.row + 1; end;
+
+  FAcrossDirection := (FAcrossDirection AND (NOT vMoveDown)) OR (vMoveRight AND (NOT FAcrossDirection));
 end;
 
-procedure TCrosswordGrid.addModifierByClue(aClueNumber: integer; aDirection: TClueDirection; aLetterPosition: integer; aModifier: TGridModifier);
+function TCrosswordGrid.calculateNumbers: void;
 begin
-  var vFound     := FALSE;
-  var vTargetCol := 0;
-  var vTargetRow := 0;
-
+  var vNum := 1;
   for var vRow := 1 to GRID_SIZE do
     for var vCol := 1 to GRID_SIZE do begin
-      var vIsMatch := (FNumbers[vCol, vRow] = aClueNumber) AND (NOT vFound);
-
-      case vIsMatch AND (aDirection = cdAcross) of TRUE: begin
-        vTargetCol := vCol + aLetterPosition - 1;
-        vTargetRow := vRow;
-        vFound := TRUE;
-      end;end;
-
-      case vIsMatch AND (aDirection = cdDown) of TRUE: begin
-        vTargetCol := vCol;
-        vTargetRow := vRow + aLetterPosition - 1;
-        vFound := TRUE;
+      FNumbers[vCol, vRow] := 0;
+      case needsNumber(vCol, vRow) of TRUE: begin
+        FNumbers[vCol, vRow] := vNum;
+        inc(vNum);
       end;end;
     end;
-
-
-  case vFound of TRUE: addModifier(vTargetCol, vTargetRow, aModifier); end;
 end;
 
-procedure TCrosswordGrid.applySetupModifier(aCol, aRow: integer; aKey: char);
+function TCrosswordGrid.encodeRow(aRow: integer): string;
 begin
-  FBoldRight[aCol, aRow]    := FBoldRight[aCol, aRow]    XOR (aKey = '|');
-  FBoldBottom[aCol, aRow]   := FBoldBottom[aCol, aRow]   XOR (aKey = '_');
-  FHyphenRight[aCol, aRow]  := FHyphenRight[aCol, aRow]  XOR (aKey = '-');
-  FHyphenBottom[aCol, aRow] := FHyphenBottom[aCol, aRow] XOR (aKey = '=');
+  result := '';
+  var vEmptyCount := 0;
 
-  FCrosswordGrid.invalidate;
-end;
+  for var vCol := 1 to GRID_SIZE do begin
+    var vIsCellBlack := FIsBlack[vCol, aRow];
+    var vHasLetter   := FLetters[vCol, aRow] <> #0;
+    var vHasModifier := FBoldRight[vCol, aRow] OR FBoldBottom[vCol, aRow] OR FHyphenRight[vCol, aRow] OR FHyphenBottom[vCol, aRow];
 
-procedure TCrosswordGrid.arrayGrid(const aLines: array of string);
-begin
-  var vCombined := '';
-  for var vIndex := low(aLines) to high(aLines) do begin
-    case vCombined <> '' of TRUE: vCombined := vCombined + '/'; end;
-    vCombined := vCombined + aLines[vIndex];
+    case (NOT vIsCellBlack) AND (NOT vHasLetter) of TRUE: inc(vEmptyCount); end;
+
+    case (vIsCellBlack OR vHasLetter) AND (vEmptyCount > 0) of TRUE: begin
+      result := result + intToStr(vEmptyCount);
+      vEmptyCount := 0;
+    end;end;
+
+    case vIsCellBlack of TRUE: result := result + '.'; end;
+    case vHasLetter AND (NOT vIsCellBlack) of TRUE: result := result + FLetters[vCol, aRow]; end;
+
+    case vHasModifier AND (vEmptyCount > 0) of TRUE: begin
+      result := result + intToStr(vEmptyCount);
+      vEmptyCount := 0;
+    end;end;
+
+    case FBoldRight[vCol, aRow]    of TRUE: result := result + '|'; end;
+    case FBoldBottom[vCol, aRow]   of TRUE: result := result + '_'; end;
+    case FHyphenRight[vCol, aRow]  of TRUE: result := result + '-'; end;
+    case FHyphenBottom[vCol, aRow] of TRUE: result := result + '='; end;
   end;
-  setupGrid(vCombined);
+
+  case vEmptyCount > 0 of TRUE: result := result + intToStr(vEmptyCount); end;
+end;
+
+function TCrosswordGrid.fillBlanks(var aCol: integer; aRow: integer; var aNumStr: string): void;
+begin
+  case aNumStr = '' of TRUE: EXIT; end;
+
+  var vSpaceCount := strToInt(aNumStr);
+  for var vC := 1 to vSpaceCount do begin
+    FIsBlack[aCol, aRow] := FALSE;
+    inc(aCol);
+  end;
+
+  aNumStr := '';
 end;
 
 function TCrosswordGrid.needsNumber(aCol: integer; aRow: integer): boolean;
@@ -290,34 +368,9 @@ begin
   result := (vHasRight AND (NOT vHasLeft)) OR (vHasBottom AND (NOT vHasTop));
 end;
 
-procedure TCrosswordGrid.calculateNumbers;
-begin
-  var vNum := 1;
-  for var vRow := 1 to GRID_SIZE do
-    for var vCol := 1 to GRID_SIZE do begin
-      FNumbers[vCol, vRow] := 0;
-      case needsNumber(vCol, vRow) of TRUE: begin
-        FNumbers[vCol, vRow] := vNum;
-        inc(vNum);
-      end;end;
-    end;
-end;
+{ draw methods }
 
-procedure TCrosswordGrid.clearGrid;
-begin
-  for var vRow := 1 to GRID_SIZE do
-    for var vCol := 1 to GRID_SIZE do begin
-      FIsBlack[vCol, vRow]      := FALSE;
-      FNumbers[vCol, vRow]      := 0;
-      FLetters[vCol, vRow]      := #0;
-      FBoldRight[vCol, vRow]    := FALSE;
-      FBoldBottom[vCol, vRow]   := FALSE;
-      FHyphenRight[vCol, vRow]  := FALSE;
-      FHyphenBottom[vCol, vRow] := FALSE;
-    end;
-end;
-
-procedure TCrosswordGrid.drawBackground(aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect);
+function TCrosswordGrid.drawBackground(aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect): void;
 begin
   var vIsSelected := (NOT FIsBlack[aCol, aRow]) AND (aCol - 1 = FCrosswordGrid.col) AND (aRow - 1 = FCrosswordGrid.row);
 
@@ -328,7 +381,16 @@ begin
   aCanvas.fillRect(aRect);
 end;
 
-procedure TCrosswordGrid.drawBorders(aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect);
+function TCrosswordGrid.retreatCursor(aCol: integer; aRow: integer): void;
+begin
+  var vMoveLeft := FAcrossDirection AND (aCol > 1);
+  var vMoveUp   := (NOT FAcrossDirection) AND (aRow > 1);
+
+  case vMoveLeft of TRUE: FCrosswordGrid.col := FCrosswordGrid.col - 1; end;
+  case vMoveUp   of TRUE: FCrosswordGrid.row := FCrosswordGrid.row - 1; end;
+end;
+
+function TCrosswordGrid.drawBorders(aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect): void;
 begin
   aCanvas.pen.color := clBlack;
   aCanvas.pen.width := 1;
@@ -349,7 +411,33 @@ begin
   end;end;
 end;
 
-procedure TCrosswordGrid.drawHyphens(aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect);
+function TCrosswordGrid.drawContent(aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect): void;
+begin
+  case FIsBlack[aCol, aRow] of TRUE: EXIT; end;
+
+  case FNumbers[aCol, aRow] > 0 of TRUE: begin
+    aCanvas.font.name   := 'Arial';
+    aCanvas.font.size   := 8;
+    aCanvas.font.style  := [fsBold];
+    aCanvas.font.color  := clBlack;
+    aCanvas.brush.style := bsClear;
+    aCanvas.textOut(aRect.left + 2, aRect.top + 1, intToStr(FNumbers[aCol, aRow]));
+  end;end;
+
+  case FLetters[aCol, aRow] <> #0 of TRUE: begin
+    aCanvas.font.name   := 'Arial';
+    aCanvas.font.size   := 14;
+    aCanvas.font.style  := [fsBold];
+    aCanvas.font.color  := clBlack;
+    aCanvas.brush.style := bsClear;
+    var vText           := FLetters[aCol, aRow];
+    var vDrawRect       := aRect;
+    vDrawRect.top       := vDrawRect.top + 6;
+    drawText(aCanvas.handle, pChar(vText), length(vText), vDrawRect, DT_CENTER OR DT_SINGLELINE OR DT_VCENTER);
+  end;end;
+end;
+
+function TCrosswordGrid.drawHyphens(aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect): void;
 begin
   aCanvas.pen.width := 2;
   var vMidY := aRect.top + ((aRect.bottom - aRect.top) div 2);
@@ -378,31 +466,7 @@ begin
   aCanvas.pen.width := 1;
 end;
 
-procedure TCrosswordGrid.drawContent(aCanvas: TCanvas; aCol: integer; aRow: integer; aRect: TRect);
-begin
-  case FIsBlack[aCol, aRow] of TRUE: EXIT; end;
-
-  case FNumbers[aCol, aRow] > 0 of TRUE: begin
-    aCanvas.font.name   := 'Arial';
-    aCanvas.font.size   := 8;
-    aCanvas.font.style  := [fsBold];
-    aCanvas.font.color  := clBlack;
-    aCanvas.brush.style := bsClear;
-    aCanvas.textOut(aRect.left + 2, aRect.top + 1, intToStr(FNumbers[aCol, aRow]));
-  end;end;
-
-  case FLetters[aCol, aRow] <> #0 of TRUE: begin
-    aCanvas.font.name   := 'Arial';
-    aCanvas.font.size   := 14;
-    aCanvas.font.style  := [fsBold];
-    aCanvas.font.color  := clBlack;
-    aCanvas.brush.style := bsClear;
-    var vText           := FLetters[aCol, aRow];
-    var vDrawRect       := aRect;
-    vDrawRect.top       := vDrawRect.top + 6;
-    drawText(aCanvas.handle, pChar(vText), length(vText), vDrawRect, DT_CENTER OR DT_SINGLELINE OR DT_VCENTER);
-  end;end;
-end;
+{ TDrawGrid event handlers }
 
 procedure TCrosswordGrid.gridDrawCell(sender: TObject; aCol: integer; aRow: integer; aRect: TRect; aState: TGridDrawState);
 begin
@@ -416,27 +480,34 @@ begin
   drawContent(vCanvas, vCol, vRow, aRect);
 end;
 
-procedure TCrosswordGrid.advanceCursor(aCol, aRow: integer);
+procedure TCrosswordGrid.gridKeyDown(sender: TObject; var aKey: word; aShift: TShiftState);
+  function clearSquare: void;
+  begin
+    var vCol := FCrosswordGrid.col + 1;
+    var vRow := FCrosswordGrid.row + 1;
+
+    FLetters[vCol, vRow] := #0;
+    FCrosswordGrid.invalidate;
+  end;
 begin
-  var vCanMoveRight := (aCol < GRID_SIZE) AND (NOT FIsBlack[aCol + 1, aRow]);
-  var vCanMoveDown  := (aRow < GRID_SIZE) AND (NOT FIsBlack[aCol, aRow + 1]);
 
-  var vMoveRight := (FAcrossDirection AND vCanMoveRight) OR (NOT FAcrossDirection AND NOT vCanMoveDown AND vCanMoveRight);
-  var vMoveDown  := (NOT FAcrossDirection AND vCanMoveDown) OR (FAcrossDirection AND NOT vCanMoveRight AND vCanMoveDown);
+  debugInteger('.gridKeyDown.aKey', aKey);
 
-  case vMoveRight of TRUE: FCrosswordGrid.col := FCrosswordGrid.col + 1; end;
-  case vMoveDown  of TRUE: FCrosswordGrid.row := FCrosswordGrid.row + 1; end;
+  case aKey = VK_ESCAPE of TRUE: begin
+    var vForm := getParentForm(FCrosswordGrid);
+    case vForm <> NIL of TRUE: TForm(vForm).close; end;
+    EXIT;
+  end;end;
 
-  FAcrossDirection := (FAcrossDirection AND (NOT vMoveDown)) OR (vMoveRight AND (NOT FAcrossDirection));
-end;
+  case (aKey = VK_RIGHT) OR (aKey = VK_LEFT) of TRUE: FAcrossDirection := TRUE;  end;
+  case (aKey = VK_DOWN)  OR (aKey = VK_UP)   of TRUE: FAcrossDirection := FALSE; end;
 
-procedure TCrosswordGrid.retreatCursor(aCol: integer; aRow: integer);
-begin
-  var vMoveLeft := FAcrossDirection AND (aCol > 1);
-  var vMoveUp   := (NOT FAcrossDirection) AND (aRow > 1);
+  case aKey = VK_SPACE of TRUE: begin
+    FAcrossDirection := NOT FAcrossDirection;
+    FCrosswordGrid.invalidate;
+  end;end;
 
-  case vMoveLeft of TRUE: FCrosswordGrid.col := FCrosswordGrid.col - 1; end;
-  case vMoveUp   of TRUE: FCrosswordGrid.row := FCrosswordGrid.row - 1; end;
+  case aKey = VK_DELETE of TRUE: clearSquare; end;
 end;
 
 procedure TCrosswordGrid.gridKeyPress(sender: TObject; var aKey: char);
@@ -447,19 +518,20 @@ begin
   case FIsBlack[vCol, vRow] of TRUE: EXIT; end;
 
   var vIsModifier := aKey in ['|', '_', '-', '='];
-  var vIsSetupAndModifier := {SETUP AND} vIsModifier;
 
-  case vIsSetupAndModifier of TRUE: begin
+  case vIsModifier of TRUE: begin
     applySetupModifier(vCol, vRow, aKey);
     FIsDirty := TRUE;
     EXIT;
   end;end;
 
-  case NOT (aKey in ['a'..'z', 'A'..'Z', #8]) of TRUE: EXIT; end;
+  debugInteger('.gridKeyPress.aKey', ord(aKey));
+
+  case aKey in ['a'..'z', 'A'..'Z', KEY_BACKSPACE] of FALSE: EXIT; end;
 
   FIsDirty := TRUE;
 
-  case aKey = #8 of TRUE: begin
+  case aKey in [KEY_BACKSPACE] of TRUE: begin
     FLetters[vCol, vRow] := #0;
     retreatCursor(vCol, vRow);
     FCrosswordGrid.invalidate;
@@ -473,7 +545,7 @@ end;
 
 procedure TCrosswordGrid.gridMouseDown(sender: TObject; button: TMouseButton; shift: TShiftState; X: integer; Y: integer);
 begin
-  case NOT SETUP of TRUE: EXIT; end;
+  case GRID_SETUP of FALSE: EXIT; end;
 
   var vDrawCol := -1;
   var vDrawRow := -1;
@@ -496,44 +568,8 @@ begin
   end;end;
 
   calculateNumbers;
+  FIsDirty := TRUE;
   FCrosswordGrid.invalidate;
-end;
-
-function TCrosswordGrid.isDirty: boolean;
-begin
-  result := FIsDirty;
-end;
-
-procedure TCrosswordGrid.readSavedGrid(const aFilename: string; aIndex: integer);
-begin
-  case fileExists(aFilename) of FALSE: EXIT; end;
-
-  var vStringList := TStringList.create;
-  try
-    vStringList.loadFromFile(aFilename);
-    case aIndex = -1 of TRUE: aIndex := vStringList.count - 1; end;
-
-    case (aIndex >= 0) AND (aIndex < vStringList.count) of TRUE: setupGrid(vStringList[aIndex]); end;
-  finally
-    vStringList.free;
-  end;
-end;
-
-procedure TCrosswordGrid.gridKeyDown(sender: TObject; var aKey: word; aShift: TShiftState);
-begin
-  case aKey = VK_ESCAPE of TRUE: begin
-    var vForm := getParentForm(FCrosswordGrid);
-    case vForm <> NIL of TRUE: TForm(vForm).close; end;
-    EXIT;
-  end;end;
-
-  case (aKey = VK_RIGHT) OR (aKey = VK_LEFT) of TRUE: FAcrossDirection := TRUE;  end;
-  case (aKey = VK_DOWN)  OR (aKey = VK_UP)   of TRUE: FAcrossDirection := FALSE; end;
-
-  case aKey = VK_SPACE of TRUE: begin
-    FAcrossDirection := NOT FAcrossDirection;
-    FCrosswordGrid.invalidate;
-  end;end;
 end;
 
 end.
