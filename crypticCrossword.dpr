@@ -72,12 +72,12 @@ begin
     '9.5'
   ]);
 
-  mainForm.mainGrid.addModifierByClue(15, cdAcross, 4, gmHorzWordBreak);
-  mainForm.mainGrid.addModifierByClue(15, cdAcross, 6, gmHorzWordBreak);
-  mainForm.mainGrid.addModifierByClue(27, cdAcross, 4, gmHorzWordBreak);
-  mainForm.mainGrid.addModifierByClue( 3, cdDown,   1, gmVertWordBreak);
-  mainForm.mainGrid.addModifierByClue( 4, cdAcross, 4, gmHorzHyphen);
-  mainForm.mainGrid.addModifierByClue( 4, cdDown,   4, gmVertHyphen);
+  mainForm.mainGrid.addModifierByClue(15, cdAcross, 4, gmAcrossWordBreak);
+  mainForm.mainGrid.addModifierByClue(15, cdAcross, 6, gmAcrossWordBreak);
+  mainForm.mainGrid.addModifierByClue(27, cdAcross, 4, gmAcrossWordBreak);
+  mainForm.mainGrid.addModifierByClue( 3, cdDown,   1, gmDownWordBreak);
+  mainForm.mainGrid.addModifierByClue( 4, cdAcross, 4, gmAcrossHyphen);
+  mainForm.mainGrid.addModifierByClue( 4, cdDown,   4, gmDownHyphen);
 
   mainForm.mainGrid.stringToGrid('5_.4-5/1.1.1.1.1.1.1.1/9.5/1...1.1=.1.1.1.1/BUTTERFINGERS../1.1.1.1...1.1.1/4.4|2|4/1.1.1.1.1.1.1.1/10.4/1.1.1...1.1.1.1/..13/1.1.1.1.1.1...1/5.9/1.1.1.1.1.1.1.1/4|5.5');
 
@@ -85,7 +85,7 @@ begin
 
   mainForm.mainGrid.readSavedGrid(extractFilePath(paramStr(0)) + 'crypticCrossword.txt', -1);
 
-  // case GRID_SETUP of TRUE: mainForm.mainGrid.clearGrid; end;
+  // case mainForm.mainGrid.setupGrid of TRUE: mainForm.mainGrid.clearGrid; end;
 
   application.run;
 end.

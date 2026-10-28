@@ -81,7 +81,7 @@ end;
 
 procedure TMainForm.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
-  case (key = VK_DELETE) and (ssCtrl in shift) of TRUE: FSetupGrid := FCrosswordGrid.setupGrid; end;
+  case (ssCtrl in shift) and (key = VK_DELETE) of TRUE: FSetupGrid := FCrosswordGrid.setupGrid; end;
 end;
 
 end.
