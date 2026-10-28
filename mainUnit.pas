@@ -49,14 +49,12 @@ begin
   FGridPanel.padding.right  := 3;
   FGridPanel.padding.bottom := 3;
 
-  FCrossword := newCrosswordGrid(FGridPanel);
+  FCrosswordGrid := newCrosswordGrid(FGridPanel);
 end;
 
 procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  case FCrossword <> NIL of
-    TRUE: FCrossword.saveGridToFile(extractFilePath(paramStr(0)) + 'crypticCrossword.txt');
-  end;
+  case FCrosswordGrid <> NIL of TRUE: FCrosswordGrid.saveGridToFile(extractFilePath(paramStr(0)) + 'crypticCrossword.txt'); end;
 end;
 
 end.
