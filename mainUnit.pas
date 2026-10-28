@@ -1,3 +1,21 @@
+{   crypticCrossword
+    Copyright (C) 2026-2099 Baz Cuda
+    https://github.com/BazzaCuda/crypticCrossword
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307, USA
+}
 unit mainUnit;
 
 interface
@@ -11,9 +29,11 @@ uses
 type
   TMainForm = class(TForm)
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     FGridPanel:     TPanel;
     FCrosswordGrid: ICrosswordGrid;
+    FSetupGrid:     boolean;
   public
     constructor create(aOwner: TComponent); override;
     property    mainGrid: ICrosswordGrid read FCrosswordGrid;
@@ -57,6 +77,11 @@ begin
   case FCrosswordGrid = NIL   of  TRUE: EXIT; end;
   case FCrosswordGrid.isDirty of FALSE: EXIT; end;
   FCrosswordGrid.saveGridToFile(extractFilePath(paramStr(0)) + 'crypticCrossword.txt');
+end;
+
+procedure TMainForm.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  case (key = VK_DELETE) and (ssCtrl in shift) of TRUE: FSetupGrid := FCrosswordGrid.setupGrid; end;
 end;
 
 end.

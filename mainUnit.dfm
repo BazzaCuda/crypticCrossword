@@ -10,6 +10,8 @@ object MainForm: TMainForm
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  KeyPreview = True
   OnClose = FormClose
+  OnKeyDown = FormKeyDown
   TextHeight = 15
 end
