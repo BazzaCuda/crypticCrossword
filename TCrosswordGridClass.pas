@@ -12,8 +12,8 @@ const
   SETUP = FALSE;
 
 type
-  TClueDirection = (cdAcross, cdDown);
-  TGridModifier = (gmHorzWordBreak, gmVertWordBreak, gmHorzHyphen, gmVertHyphen);
+  TClueDirection  = (cdAcross, cdDown);
+  TGridModifier   = (gmHorzWordBreak, gmVertWordBreak, gmHorzHyphen, gmVertHyphen);
 
   ICrosswordGrid = interface
     procedure addModifier(aCol: integer; aRow: integer; aModifier: TGridModifier);

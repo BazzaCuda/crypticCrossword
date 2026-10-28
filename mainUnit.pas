@@ -3,19 +3,20 @@ unit mainUnit;
 interface
 
 uses
-  winapi.windows, winapi.messages, system.sysUtils, system.variants,
-  system.classes, vcl.graphics, vcl.controls, vcl.forms, vcl.dialogs,
-  vcl.extCtrls, TCrosswordGridClass;
+  winAPI.windows, winAPI.messages,
+  system.classes, system.sysUtils, system.variants,
+  vcl.controls, vcl.dialogs, vcl.extCtrls, vcl.forms, vcl.graphics,
+  TCrosswordGridClass;
 
 type
   TMainForm = class(TForm)
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
-    FGridPanel: TPanel;
-    FCrossword: ICrosswordGrid;
+    FGridPanel:     TPanel;
+    FCrosswordGrid: ICrosswordGrid;
   public
     constructor create(aOwner: TComponent); override;
-    property    mainGrid: ICrosswordGrid read FCrossword;
+    property    mainGrid: ICrosswordGrid read FCrosswordGrid;
   end;
 
 var
