@@ -23,14 +23,16 @@ unit TCrosswordGridClass;
 **layout string**
 
 The layout string describes the grid, row by row, similar to FEN chess notation
-dot . is a black, non-square in the grid
-digits 0..9 indicate a number of consecutive letter squares
-slash / indicates the end of a row
-vertical bar | the current across-clue square is to be followed by a bold vertical word-break
-underscore _ the current down-clue square is to have a bold horizontal word-break
-hyphen - the current across-clue square is to have a hozizontal hyphen to the next square
-equals = the current down-clue square is to have a vertical hyphen to the next square
-any capital letter A..Z is entered in the square
+| character | purpose |
+| ----- | ----- |
+| dot . | is a black, non-square in the grid |
+| digits 0..9 | indicate a number of consecutive letter squares |
+| slash / | indicates the end of a row |
+| vertical bar | the current across-clue square is to be followed by a bold vertical word-break |
+| underscore _ | the current down-clue square is to have a bold horizontal word-break |
+| hyphen - | the current across-clue square is to have a horizontal hyphen to the next square |
+| equals = | the current down-clue square is to have a vertical hyphen to the next square |
+| any capital letter A..Z | is entered in the square |
 
 e.g. a standard empty grid
 ```
@@ -76,6 +78,8 @@ In addition to specifying the word-break and hyphenations in the layout string, 
   addModifierByClue( 4, cdAcross, 4, gmAcrossHyphen);
   addModifierByClue( 4, cdDown,   4, gmDownHyphen);
 ```
+
+
 }
 
 interface
