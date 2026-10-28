@@ -113,19 +113,23 @@ begin
 
     case (NOT vIsCellBlack) AND (NOT vHasLetter) of TRUE: inc(vEmptyCount); end;
 
-    case vIsCellBlack OR vHasLetter of TRUE: begin
-      case vEmptyCount > 0 of TRUE: begin result := result + intToStr(vEmptyCount); vEmptyCount := 0; end; end;
-      case vIsCellBlack    of TRUE: result := result + '.'; end;
-      case vHasLetter AND (NOT vIsCellBlack) of TRUE: result := result + FLetters[vCol, aRow]; end;
-    end; end;
+    case (vIsCellBlack OR vHasLetter) AND (vEmptyCount > 0) of TRUE: begin
+      result := result + intToStr(vEmptyCount);
+      vEmptyCount := 0;
+    end;end;
 
-    case vHasModifier of TRUE: begin
-      case vEmptyCount > 0           of TRUE: begin result := result + intToStr(vEmptyCount); vEmptyCount := 0; end; end;
-      case FBoldRight[vCol, aRow]    of TRUE: result := result + '|'; end;
-      case FBoldBottom[vCol, aRow]   of TRUE: result := result + '_'; end;
-      case FHyphenRight[vCol, aRow]  of TRUE: result := result + '-'; end;
-      case FHyphenBottom[vCol, aRow] of TRUE: result := result + '='; end;
-    end; end;
+    case vIsCellBlack of TRUE: result := result + '.'; end;
+    case vHasLetter AND (NOT vIsCellBlack) of TRUE: result := result + FLetters[vCol, aRow]; end;
+
+    case vHasModifier AND (vEmptyCount > 0) of TRUE: begin
+      result := result + intToStr(vEmptyCount);
+      vEmptyCount := 0;
+    end;end;
+
+    case FBoldRight[vCol, aRow]    of TRUE: result := result + '|'; end;
+    case FBoldBottom[vCol, aRow]   of TRUE: result := result + '_'; end;
+    case FHyphenRight[vCol, aRow]  of TRUE: result := result + '-'; end;
+    case FHyphenBottom[vCol, aRow] of TRUE: result := result + '='; end;
   end;
 
   case vEmptyCount > 0 of TRUE: result := result + intToStr(vEmptyCount); end;
@@ -174,18 +178,36 @@ begin
   for var vIndex := 1 to length(aLayout) do begin
     var vChar := aLayout[vIndex];
 
-    case vChar in ['A'..'Z'] of TRUE: begin fillBlanks(vCol, vRow, vNumStr); FLetters[vCol, vRow] := vChar; inc(vCol); CONTINUE; end; end;
-    case vChar in ['0'..'9'] of TRUE: begin vNumStr := vNumStr + vChar; CONTINUE; end; end;
+    case vChar in ['A'..'Z'] of TRUE: begin
+      fillBlanks(vCol, vRow, vNumStr);
+      FLetters[vCol, vRow] := vChar;
+      inc(vCol);
+      CONTINUE;
+    end;end;
+
+    case vChar in ['0'..'9'] of TRUE: begin
+      vNumStr := vNumStr + vChar;
+      CONTINUE;
+    end;end;
 
     fillBlanks(vCol, vRow, vNumStr);
 
-    case vChar = '.' of TRUE: begin FIsBlack[vCol, vRow] := TRUE; inc(vCol); CONTINUE; end; end;
-    case vChar = '/' of TRUE: begin vCol := 1; inc(vRow); CONTINUE; end; end;
+    case vChar = '.' of TRUE: begin
+      FIsBlack[vCol, vRow] := TRUE;
+      inc(vCol);
+      CONTINUE;
+    end;end;
 
-    FBoldRight[vCol - 1, vRow]    := FBoldRight[vCol - 1, vRow]    OR (vChar = '|');
-    FBoldBottom[vCol - 1, vRow]   := FBoldBottom[vCol - 1, vRow]   OR (vChar = '_');
-    FHyphenRight[vCol - 1, vRow]  := FHyphenRight[vCol - 1, vRow]  OR (vChar = '-');
-    FHyphenBottom[vCol - 1, vRow] := FHyphenBottom[vCol - 1, vRow] OR (vChar = '=');
+    case vChar = '/' of TRUE: begin
+      vCol := 1;
+      inc(vRow);
+      CONTINUE;
+    end;end;
+
+    FBoldRight    [vCol - 1, vRow]  := FBoldRight     [vCol - 1, vRow] OR (vChar = '|');
+    FBoldBottom   [vCol - 1, vRow]  := FBoldBottom    [vCol - 1, vRow] OR (vChar = '_');
+    FHyphenRight  [vCol - 1, vRow]  := FHyphenRight   [vCol - 1, vRow] OR (vChar = '-');
+    FHyphenBottom [vCol - 1, vRow]  := FHyphenBottom  [vCol - 1, vRow] OR (vChar = '=');
   end;
 
   fillBlanks(vCol, vRow, vNumStr);
@@ -194,10 +216,10 @@ end;
 
 procedure TCrosswordGrid.addModifier(aCol, aRow: integer; aModifier: TGridModifier);
 begin
-  FBoldRight[aCol, aRow]    := FBoldRight[aCol, aRow]    OR (aModifier = gmHorzWordBreak);
-  FBoldBottom[aCol, aRow]   := FBoldBottom[aCol, aRow]   OR (aModifier = gmVertWordBreak);
-  FHyphenRight[aCol, aRow]  := FHyphenRight[aCol, aRow]  OR (aModifier = gmHorzHyphen);
-  FHyphenBottom[aCol, aRow] := FHyphenBottom[aCol, aRow] OR (aModifier = gmVertHyphen);
+  FBoldRight    [aCol, aRow]  := FBoldRight     [aCol, aRow]  OR (aModifier = gmHorzWordBreak);
+  FBoldBottom   [aCol, aRow]  := FBoldBottom    [aCol, aRow]  OR (aModifier = gmVertWordBreak);
+  FHyphenRight  [aCol, aRow]  := FHyphenRight   [aCol, aRow]  OR (aModifier = gmHorzHyphen);
+  FHyphenBottom [aCol, aRow]  := FHyphenBottom  [aCol, aRow]  OR (aModifier = gmVertHyphen);
 
   FCrosswordGrid.invalidate;
 end;
@@ -211,9 +233,20 @@ begin
   for var vRow := 1 to GRID_SIZE do
     for var vCol := 1 to GRID_SIZE do begin
       var vIsMatch := (FNumbers[vCol, vRow] = aClueNumber) AND (NOT vFound);
-      case vIsMatch AND (aDirection = cdAcross) of TRUE: begin vTargetCol := vCol + aLetterPosition - 1; vTargetRow := vRow; vFound := TRUE; end; end;
-      case vIsMatch AND (aDirection = cdDown)   of TRUE: begin vTargetCol := vCol; vTargetRow := vRow + aLetterPosition - 1; vFound := TRUE; end; end;
+
+      case vIsMatch AND (aDirection = cdAcross) of TRUE: begin
+        vTargetCol := vCol + aLetterPosition - 1;
+        vTargetRow := vRow;
+        vFound := TRUE;
+      end;end;
+
+      case vIsMatch AND (aDirection = cdDown) of TRUE: begin
+        vTargetCol := vCol;
+        vTargetRow := vRow + aLetterPosition - 1;
+        vFound := TRUE;
+      end;end;
     end;
+
 
   case vFound of TRUE: addModifier(vTargetCol, vTargetRow, aModifier); end;
 end;
@@ -257,7 +290,10 @@ begin
   for var vRow := 1 to GRID_SIZE do
     for var vCol := 1 to GRID_SIZE do begin
       FNumbers[vCol, vRow] := 0;
-      case needsNumber(vCol, vRow) of TRUE: begin FNumbers[vCol, vRow] := vNum; inc(vNum); end; end;
+      case needsNumber(vCol, vRow) of TRUE: begin
+        FNumbers[vCol, vRow] := vNum;
+        inc(vNum);
+      end;end;
     end;
 end;
 
@@ -296,11 +332,15 @@ begin
   aCanvas.moveTo(aRect.left, aRect.top);
   aCanvas.lineTo(aRect.left, aRect.bottom);
 
-  var vDrawRight  := (aCol = GRID_SIZE) OR FBoldRight[aCol, aRow];
-  var vDrawBottom := (aRow = GRID_SIZE) OR FBoldBottom[aCol, aRow];
+  case (aCol = GRID_SIZE) OR FBoldRight[aCol, aRow] of TRUE: begin
+    aCanvas.moveTo(aRect.right - 1, aRect.top);
+    aCanvas.lineTo(aRect.right - 1, aRect.bottom);
+  end;end;
 
-  case vDrawRight  of TRUE: begin aCanvas.moveTo(aRect.right - 1, aRect.top);   aCanvas.lineTo(aRect.right - 1, aRect.bottom); end; end;
-  case vDrawBottom of TRUE: begin aCanvas.moveTo(aRect.left, aRect.bottom - 1); aCanvas.lineTo(aRect.right, aRect.bottom - 1); end; end;
+  case (aRow = GRID_SIZE) OR FBoldBottom[aCol, aRow] of TRUE: begin
+    aCanvas.moveTo(aRect.left, aRect.bottom - 1);
+    aCanvas.lineTo(aRect.right, aRect.bottom - 1);
+  end;end;
 end;
 
 procedure TCrosswordGrid.drawHyphens(aCanvas: TCanvas; aCol, aRow: integer; aRect: TRect);
@@ -309,15 +349,25 @@ begin
   var vMidY := aRect.top + ((aRect.bottom - aRect.top) div 2);
   var vMidX := aRect.left + ((aRect.right - aRect.left) div 2);
 
-  case FHyphenRight[aCol, aRow] of TRUE: begin aCanvas.moveTo(aRect.right - 4, vMidY); aCanvas.lineTo(aRect.right, vMidY); end; end;
+  case FHyphenRight[aCol, aRow] of TRUE: begin
+    aCanvas.moveTo(aRect.right - 4, vMidY);
+    aCanvas.lineTo(aRect.right, vMidY);
+  end;end;
 
-  var vPrevHasHyphenRight := (aCol > 1) AND FHyphenRight[aCol - 1, aRow];
-  case vPrevHasHyphenRight of TRUE: begin aCanvas.moveTo(aRect.left, vMidY); aCanvas.lineTo(aRect.left + 4, vMidY); end; end;
+  case (aCol > 1) AND FHyphenRight[aCol - 1, aRow] of TRUE: begin
+    aCanvas.moveTo(aRect.left, vMidY);
+    aCanvas.lineTo(aRect.left + 4, vMidY);
+  end;end;
 
-  case FHyphenBottom[aCol, aRow] of TRUE: begin aCanvas.moveTo(vMidX, aRect.bottom - 4); aCanvas.lineTo(vMidX, aRect.bottom); end; end;
+  case FHyphenBottom[aCol, aRow] of TRUE: begin
+    aCanvas.moveTo(vMidX, aRect.bottom - 4);
+    aCanvas.lineTo(vMidX, aRect.bottom);
+  end;end;
 
-  var vPrevHasHyphenBottom := (aRow > 1) AND FHyphenBottom[aCol, aRow - 1];
-  case vPrevHasHyphenBottom of TRUE: begin aCanvas.moveTo(vMidX, aRect.top); aCanvas.lineTo(vMidX, aRect.top + 4); end; end;
+  case (aRow > 1) AND FHyphenBottom[aCol, aRow - 1] of TRUE: begin
+    aCanvas.moveTo(vMidX, aRect.top);
+    aCanvas.lineTo(vMidX, aRect.top + 4);
+  end;end;
 
   aCanvas.pen.width := 1;
 end;
@@ -333,7 +383,7 @@ begin
     aCanvas.font.color  := clBlack;
     aCanvas.brush.style := bsClear;
     aCanvas.textOut(aRect.left + 2, aRect.top + 1, intToStr(FNumbers[aCol, aRow]));
-  end; end;
+  end;end;
 
   case FLetters[aCol, aRow] <> #0 of TRUE: begin
     aCanvas.font.name   := 'Arial';
@@ -345,7 +395,7 @@ begin
     var vDrawRect       := aRect;
     vDrawRect.top       := vDrawRect.top + 6;
     drawText(aCanvas.handle, pChar(vText), length(vText), vDrawRect, DT_CENTER OR DT_SINGLELINE OR DT_VCENTER);
-  end; end;
+  end;end;
 end;
 
 procedure TCrosswordGrid.gridDrawCell(sender: TObject; aCol, aRow: integer; aRect: TRect; aState: TGridDrawState);
@@ -393,7 +443,10 @@ begin
   var vIsModifier := aKey in ['|', '_', '-', '='];
   var vIsSetupAndModifier := {SETUP AND} vIsModifier;
 
-  case vIsSetupAndModifier of TRUE: begin applySetupModifier(vCol, vRow, aKey); EXIT; end; end;
+  case vIsSetupAndModifier of TRUE: begin
+    applySetupModifier(vCol, vRow, aKey);
+    EXIT;
+  end;end;
 
   case NOT (aKey in ['a'..'z', 'A'..'Z', #8]) of TRUE: EXIT; end;
 
@@ -402,7 +455,7 @@ begin
     retreatCursor(vCol, vRow);
     FCrosswordGrid.invalidate;
     EXIT;
-  end; end;
+  end;end;
 
   FLetters[vCol, vRow] := upCase(aKey);
   advanceCursor(vCol, vRow);
@@ -431,7 +484,7 @@ begin
     FBoldBottom[vCol, vRow]   := FALSE;
     FHyphenRight[vCol, vRow]  := FALSE;
     FHyphenBottom[vCol, vRow] := FALSE;
-  end; end;
+  end;end;
 
   calculateNumbers;
   FCrosswordGrid.invalidate;
@@ -458,7 +511,7 @@ begin
     var vForm := getParentForm(FCrosswordGrid);
     case vForm <> NIL of TRUE: TForm(vForm).close; end;
     EXIT;
-  end; end;
+  end;end;
 
   case (aKey = VK_RIGHT) OR (aKey = VK_LEFT) of TRUE: FAcrossDirection := TRUE;  end;
   case (aKey = VK_DOWN)  OR (aKey = VK_UP)   of TRUE: FAcrossDirection := FALSE; end;
@@ -466,7 +519,7 @@ begin
   case aKey = VK_SPACE of TRUE: begin
     FAcrossDirection := NOT FAcrossDirection;
     FCrosswordGrid.invalidate;
-  end; end;
+  end;end;
 end;
 
 end.
