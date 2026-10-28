@@ -18,6 +18,35 @@
 }
 unit TCrosswordGridClass;
 
+{ layout key }
+// the layout describes the grid, row by row
+// dot . is a black, non-square in the grid
+// digits 0..9 is a number of consecutive letter squares
+// slash / indicates the end of a row
+// vertical bar | the current across-clue square is to be followed by a bold vertical word-break
+// underscore _ the current down-clue square is to have a bold horizontal word-break
+// hyphen - the current across-clue square is to have a hozizontal hyphen to the next square
+// equals = the current down-clue square is to have a vertical hyphen to the next square
+// any capital letter A..Z is entered in the square
+
+// e.g. a standard empty grid
+// 1.1.1.1.1.1.1.1/9.5/1.1.1.1.1.1.1.1/5.9/..1.1.1.1...1../7.7/1...1...1.1.1.1/5.3.5/1.1.1.1...1...1/7.7/..1...1.1.1.1../9.5/1.1.1.1.1.1.1.1/5.9/1.1.1.1.1.1.1.1
+
+// e.g. a partially-completed grid
+// 1.1.1.M.1.E=.1.B/6I2.FRAIL/1.1.1.S.1.I.1.U/5.SPECTACLE/..1.1.U.1...1../G5S.6S/A...1...1.1.1.T/VALUE.FOR.MONEY/E.A.1.O...1...L/LIMITER.FELLINI/..B_...W.1.1.1_../KICK-START.4M/1.H.1.R.1.1.1.O/2O2.DERRING-DO/1.P.1.S.1.1.1.N
+
+// e.g. a fully-completed grid
+// S.G.E.M.O.E=.S.B/PLAINTIFF.FRAIL/A.M.R.S.F.I.N.U/TEMPI.SPECTACLE/..O.C.U.N...T../GENGHIS.DISMISS/A...M...E.I.O.T/VALUE.FOR.MONEY/E.A.N.O...P...L/LIMITER.FELLINI/..B_...W.U.I.N_../KICK-START.SCRUM/H.H.A.R.U.T.A.O/ACORN.DERRING-DO/N.P.D.S.E.C.S.N
+
+{ grid setup }
+// left-click: set the square to an empty letter square
+// right-click: set the square to a black non-letter square
+// across and down clue numbers are worked out automatically as you amend the grid
+
+// DELETE - empty the square but stay put
+// BACKSPACE - empty the square and reverse the cursor one square
+// arrow keys - move cursor
+
 interface
 
 uses
