@@ -71,8 +71,8 @@ In addition to specifying the word-break and hyphenations in the layout string, 
 
 | key | action |
 | --- | --- |
-| underscore _ | place a down clue word-break under the current square |
 | vertical bar \| | place an across clue word-break at the current square |
+| underscore _ | place a down clue word-break under the current square |
 | hyphen - | place an across clue hyphen to the next square |
 | equals = | place a down clue hyphen to the next square |
 
