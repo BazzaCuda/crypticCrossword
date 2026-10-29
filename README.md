@@ -37,6 +37,10 @@ Simply pass the string to the stringToGrid method to populate the grid.
 
 **grid setup**
 
+Ctrl-Delete to toggle setup mode.
+
+BACKSPACE to clear grid
+
 left-click: set the square to an empty letter square
 
 right-click: set the square to a black non-letter square
@@ -63,5 +67,5 @@ In addition to specifying the word-break and hyphenations in the layout string, 
   addModifierByClue( 4, cdDown,   4, gmDownHyphen);
 ```
 
-
+Ctrl-S to save the grid to a text file in the same folder as the exe
   
