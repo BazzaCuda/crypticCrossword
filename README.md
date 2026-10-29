@@ -67,6 +67,7 @@ In addition to specifying the word-break and hyphenations in the layout string, 
   addModifierByClue( 4, cdDown,   4, gmDownHyphen);
 ```
 **save the grid at any time**
+
 Ctrl-S to save the grid to a text file in the same folder as the exe
 
 Closing the app also saves the current grid
