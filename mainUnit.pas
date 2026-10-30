@@ -84,6 +84,9 @@ begin
   case (ssCtrl in shift) and (key = VK_DELETE) of TRUE: FSetupGrid := FCrosswordGrid.setupGrid; end;
   case FSetupGrid and (key = VK_BACK) of TRUE: FCrosswordGrid.clearGrid; end;
   case (ssCtrl in shift) and ((key = ord('s')) or (key = ord('S'))) of TRUE: FCrosswordGrid.saveGridToFile(extractFilePath(paramStr(0)) + 'crypticCrossword.txt'); end;
+
+  case FSetupGrid of   TRUE: SELF.color := clAqua   + $000000;
+                      FALSE: SELF.color := clWhite  - $101010; end;
 end;
 
 end.
