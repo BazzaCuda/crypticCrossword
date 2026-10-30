@@ -12,7 +12,7 @@ The layout string describes the grid, row by row, similar to FEN chess notation
 | dot . | is a black, non-square in the grid |
 | digits 0..9 | indicate a number of consecutive letter squares |
 | slash / | indicates the end of a row |
-| vertical bar | the current across-clue square is to be followed by a bold vertical word-break |
+| vertical bar \| | the current across-clue square is to be followed by a bold vertical word-break |
 | underscore _ | the current down-clue square is to have a bold horizontal word-break |
 | hyphen - | the current across-clue square is to have a horizontal hyphen to the next square |
 | equals = | the current down-clue square is to have a vertical hyphen to the next square |
@@ -66,7 +66,18 @@ In addition to specifying the word-break and hyphenations in the layout string, 
   addModifierByClue( 4, cdAcross, 4, gmAcrossHyphen);
   addModifierByClue( 4, cdDown,   4, gmDownHyphen);
 ```
-** save the grid at any time **
+
+**square modifiers at any time (not just in setup mode)**
+
+| key | action |
+| --- | --- |
+| vertical bar \| | place an across clue word-break at the current square |
+| underscore _ | place a down clue word-break under the current square |
+| hyphen - | place an across clue hyphen to the next square |
+| equals = | place a down clue hyphen to the next square |
+
+**save the grid at any time**
+
 Ctrl-S to save the grid to a text file in the same folder as the exe
 
 Closing the app also saves the current grid
