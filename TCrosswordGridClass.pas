@@ -108,6 +108,7 @@ type
     function  saveGridToFile    (const aFilename: string): void;
     function  setupGrid:      boolean;
     function  stringToGrid      (const aLayout: string): void;
+    function  title             (const aTitle: string = ''): string;
   end;
 
 function newCrosswordGrid(const aParent: TWinControl): ICrosswordGrid;
@@ -134,8 +135,10 @@ type
     FHyphenBottom:    array[1..GRID_SIZE, 1..GRID_SIZE] of boolean;
 
     FAcrossDirection: boolean;
+    FDate:            string;
     FIsDirty:         boolean;
     FSetupGrid:       boolean;
+    FTitle:           string;
 
     { TCrosswordGrid }
     function  advanceCursor (const aCol: integer; const aRow: integer): void;
@@ -152,6 +155,7 @@ type
     function  retreatCursor (const aCol: integer; const aRow: integer): void;
     function  retreatGridCol: void;
     function  retreatGridRow: void;
+    function  stripInfo(const aLayout: string; const aDelimiter: char; out oTarget: string): string;
 
     { draw methods }
     function  drawBackground  (const aCanvas: TCanvas; const aCol: integer; const aRow: integer; const aRect: TRect): void;
@@ -179,6 +183,7 @@ type
     function  saveGridToFile      (const aFilename: string): void;
     function  setupGrid: boolean;
     function  stringToGrid        (const aLayout: string): void;
+    function  title               (const aTitle: string = ''): string;
   end;
 
 function newCrosswordGrid(const aParent: TWinControl): ICrosswordGrid;
@@ -333,8 +338,12 @@ begin
   var vRow            := 1;
   var vNumStr: string := '';
 
-  for var vIx := 1 to length(aLayout) do begin
-    var vChar := aLayout[vIx];
+  var vLayout := aLayout;
+  vLayout     := stripInfo(vLayout, '$', FDate);
+  vLayout     := stripInfo(vLayout, '#', FTitle);
+
+  for var vIx := 1 to length(vLayout) do begin
+    var vChar := vLayout[vIx];
 
     case vChar in ['A'..'Z'] of TRUE: begin
       applyBlanks(vCol, vRow, vNumStr);
@@ -370,6 +379,27 @@ begin
 
   applyBlanks(vCol, vRow, vNumStr);
   calculateNumbers;
+end;
+
+function TCrosswordGrid.stripInfo(const aLayout: string; const aDelimiter: char; out oTarget: string): string;
+begin
+  result  := aLayout;
+  oTarget := '';
+
+  var vStartInt := pos(aDelimiter, result);
+  case vStartInt = 0 of TRUE: EXIT;end;
+
+  var vEndInt := pos(aDelimiter, result, vStartInt + 1);
+  case vEndInt = 0 of TRUE: EXIT; end;
+
+  oTarget := copy(result, vStartInt + 1, vEndInt - vStartInt - 1);
+  delete(result, vStartInt, vEndInt - vStartInt + 1);
+end;
+
+function TCrosswordGrid.title(const aTitle: string = ''): string;
+begin
+  case aTitle = '' of FALSE: FTitle := aTitle; end;
+  result := FTitle;
 end;
 
 { TCrosswordGrid }
@@ -437,6 +467,7 @@ begin
     case result <> '' of TRUE: result := result + '/'; end;
     result := result + encodeRow(vRow);
   end;
+  result := format('$%s$#%s#%s', [FDate, FTitle, result]);
 end;
 
 function  TCrosswordGrid.encodeRow(const aRow: integer): string;

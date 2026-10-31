@@ -84,6 +84,7 @@ begin
   mainForm.mainGrid.clearGrid;
 
   mainForm.mainGrid.readSavedGrid(extractFilePath(paramStr(0)) + 'crypticCrossword.txt', -1);
+  mainForm.caption := mainForm.caption + ' - '  + mainForm.mainGrid.title;
 
   // case mainForm.mainGrid.setupGrid of TRUE: mainForm.mainGrid.clearGrid; end;
 
