@@ -421,16 +421,19 @@ end;
 
 function  TCrosswordGrid.advanceCursor(const aCol: integer; const aRow: integer): void;
 begin
-  var vCanMoveRight := (aCol < GRID_SIZE) AND (NOT FIsBlack[aCol + 1, aRow]);
-  var vCanMoveDown  := (aRow < GRID_SIZE) AND (NOT FIsBlack[aCol, aRow + 1]);
+  var vCanMoveRight := (aCol < GRID_SIZE) and (NOT FIsBlack[aCol + 1, aRow]);
+  var vCanMoveDown  := (aRow < GRID_SIZE) and (NOT FIsBlack[aCol, aRow + 1]);
 
-  var vMoveRight := (FAcrossDirection AND vCanMoveRight) OR (NOT FAcrossDirection AND NOT vCanMoveDown AND vCanMoveRight);
-  var vMoveDown  := (NOT FAcrossDirection AND vCanMoveDown) OR (FAcrossDirection AND NOT vCanMoveRight AND vCanMoveDown);
+  var vMoveRight := (FAcrossDirection and vCanMoveRight) or (NOT FAcrossDirection and NOT vCanMoveDown and vCanMoveRight);
+  var vMoveDown  := (NOT FAcrossDirection and vCanMoveDown) or (FAcrossDirection and NOT vCanMoveRight and vCanMoveDown);
 
   case vMoveRight of TRUE: advanceGridCol; end;
   case vMoveDown  of TRUE: advanceGridRow; end;
 
-  FAcrossDirection := (FAcrossDirection AND (NOT vMoveDown)) OR (vMoveRight AND (NOT FAcrossDirection));
+  FAcrossDirection := (FAcrossDirection and (NOT vMoveDown)) or (vMoveRight and (NOT FAcrossDirection));
+
+  var vMoved := vMoveRight or vMoveDown;
+  case vMoved and (FLetters[gridCol, gridRow] <> EMPTY_CHAR) of TRUE: advanceCursor(gridCol, gridRow); end;
 end;
 
 function TCrosswordGrid.advanceGridCol: void;
