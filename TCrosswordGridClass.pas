@@ -119,7 +119,22 @@ uses
   _debugWindow;
 
 const
-  KEY_BACKSPACE =  #8;
+  EMPTY_CHAR            = #0;
+  EMPTY_STRING: string  = '';
+
+  CHAR_BACKSPACE        =  #8;
+  CHAR_DOLLAR           = '$';
+  CHAR_DOT              = '.';
+  CHAR_EQUALS           = '=';
+  CHAR_HASH             = '#';
+  CHAR_HYPHEN           = '-';
+  CHAR_SLASH            = '/';
+  CHAR_UNDERSCORE       = '_';
+  CHAR_VERTICAL_BAR     = '|';
+
+  CHAR_SET_0_TO_9       = ['0'..'9'];
+  CHAR_SET_A_TO_Z       = ['A'..'Z'];
+  CHAR_SET_MODIFIERS    = [CHAR_VERTICAL_BAR, CHAR_UNDERSCORE, CHAR_HYPHEN, CHAR_EQUALS];
 
 type
   TCrosswordGrid = class(TInterfacedObject, ICrosswordGrid)
@@ -155,7 +170,7 @@ type
     function  retreatCursor (const aCol: integer; const aRow: integer): void;
     function  retreatGridCol: void;
     function  retreatGridRow: void;
-    function  stripInfo(const aLayout: string; const aDelimiter: char; out oTarget: string): string;
+    function  stripInfo(const aLayout: string; const aDelimiter: char; out oInfo: string): string;
 
     { draw methods }
     function  drawBackground  (const aCanvas: TCanvas; const aCol: integer; const aRow: integer; const aRect: TRect): void;
@@ -258,19 +273,19 @@ end;
 
 function  TCrosswordGrid.applyModifier(const aCol: integer; const aRow: integer; aKey: char): void;
 begin
-  FBoldRight    [aCol, aRow]  := FBoldRight     [aCol, aRow] XOR (aKey = '|');
-  FBoldBottom   [aCol, aRow]  := FBoldBottom    [aCol, aRow] XOR (aKey = '_');
-  FHyphenRight  [aCol, aRow]  := FHyphenRight   [aCol, aRow] XOR (aKey = '-');
-  FHyphenBottom [aCol, aRow]  := FHyphenBottom  [aCol, aRow] XOR (aKey = '=');
+  FBoldRight    [aCol, aRow]  := FBoldRight     [aCol, aRow] XOR (aKey = CHAR_VERTICAL_BAR);
+  FBoldBottom   [aCol, aRow]  := FBoldBottom    [aCol, aRow] XOR (aKey = CHAR_UNDERSCORE);
+  FHyphenRight  [aCol, aRow]  := FHyphenRight   [aCol, aRow] XOR (aKey = CHAR_HYPHEN);
+  FHyphenBottom [aCol, aRow]  := FHyphenBottom  [aCol, aRow] XOR (aKey = CHAR_EQUALS);
 
   FCrosswordGrid.invalidate;
 end;
 
 function  TCrosswordGrid.arrayToGrid(const aLines: array of string): void;
 begin
-  var vCombined := '';
+  var vCombined := EMPTY_STRING;
   for var vIndex := low(aLines) to high(aLines) do begin
-    case vCombined <> '' of TRUE: vCombined := vCombined + '/'; end;
+    case vCombined <> EMPTY_STRING of TRUE: vCombined := vCombined + CHAR_SLASH; end;
     vCombined := vCombined + aLines[vIndex];
   end;
   stringToGrid(vCombined);
@@ -282,7 +297,7 @@ begin
     for var vCol := 1 to GRID_SIZE do begin
       FIsBlack      [vCol, vRow]  := FALSE;
       FNumbers      [vCol, vRow]  := 0;
-      FLetters      [vCol, vRow]  := #0;
+      FLetters      [vCol, vRow]  := EMPTY_CHAR;
       FBoldRight    [vCol, vRow]  := FALSE;
       FBoldBottom   [vCol, vRow]  := FALSE;
       FHyphenRight  [vCol, vRow]  := FALSE;
@@ -336,23 +351,23 @@ begin
 
   var vCol            := 1;
   var vRow            := 1;
-  var vNumStr: string := '';
+  var vNumStr: string := EMPTY_STRING;
 
   var vLayout := aLayout;
-  vLayout     := stripInfo(vLayout, '$', FDate);
-  vLayout     := stripInfo(vLayout, '#', FTitle);
+  vLayout     := stripInfo(vLayout, CHAR_DOLLAR, FDate);
+  vLayout     := stripInfo(vLayout, CHAR_HASH, FTitle);
 
   for var vIx := 1 to length(vLayout) do begin
     var vChar := vLayout[vIx];
 
-    case vChar in ['A'..'Z'] of TRUE: begin
+    case vChar in CHAR_SET_A_TO_Z of TRUE: begin
       applyBlanks(vCol, vRow, vNumStr);
       FLetters[vCol, vRow] := vChar;
       inc(vCol);
       CONTINUE;
     end;end;
 
-    case vChar in ['0'..'9'] of TRUE: begin
+    case vChar in CHAR_SET_0_TO_9 of TRUE: begin
       vNumStr := vNumStr + vChar;
       CONTINUE;
     end;end;
@@ -365,26 +380,26 @@ begin
       CONTINUE;
     end;end;
 
-    case vChar = '/' of TRUE: begin
+    case vChar = CHAR_SLASH of TRUE: begin
       vCol := 1;
       inc(vRow);
       CONTINUE;
     end;end;
 
-    FBoldRight    [vCol - 1, vRow]  := FBoldRight     [vCol - 1, vRow] OR (vChar = '|');
-    FBoldBottom   [vCol - 1, vRow]  := FBoldBottom    [vCol - 1, vRow] OR (vChar = '_');
-    FHyphenRight  [vCol - 1, vRow]  := FHyphenRight   [vCol - 1, vRow] OR (vChar = '-');
-    FHyphenBottom [vCol - 1, vRow]  := FHyphenBottom  [vCol - 1, vRow] OR (vChar = '=');
+    FBoldRight    [vCol - 1, vRow]  := FBoldRight     [vCol - 1, vRow] OR (vChar = CHAR_VERTICAL_BAR);
+    FBoldBottom   [vCol - 1, vRow]  := FBoldBottom    [vCol - 1, vRow] OR (vChar = CHAR_UNDERSCORE);
+    FHyphenRight  [vCol - 1, vRow]  := FHyphenRight   [vCol - 1, vRow] OR (vChar = CHAR_HYPHEN);
+    FHyphenBottom [vCol - 1, vRow]  := FHyphenBottom  [vCol - 1, vRow] OR (vChar = CHAR_EQUALS);
   end;
 
   applyBlanks(vCol, vRow, vNumStr);
   calculateNumbers;
 end;
 
-function TCrosswordGrid.stripInfo(const aLayout: string; const aDelimiter: char; out oTarget: string): string;
+function TCrosswordGrid.stripInfo(const aLayout: string; const aDelimiter: char; out oInfo: string): string;
 begin
   result  := aLayout;
-  oTarget := '';
+  oInfo := EMPTY_STRING;
 
   var vStartInt := pos(aDelimiter, result);
   case vStartInt = 0 of TRUE: EXIT;end;
@@ -392,13 +407,13 @@ begin
   var vEndInt := pos(aDelimiter, result, vStartInt + 1);
   case vEndInt = 0 of TRUE: EXIT; end;
 
-  oTarget := copy(result, vStartInt + 1, vEndInt - vStartInt - 1);
+  oInfo := copy(result, vStartInt + 1, vEndInt - vStartInt - 1);
   delete(result, vStartInt, vEndInt - vStartInt + 1);
 end;
 
 function TCrosswordGrid.title(const aTitle: string = ''): string;
 begin
-  case aTitle = '' of FALSE: FTitle := aTitle; end;
+  case aTitle = EMPTY_STRING of FALSE: FTitle := aTitle; end;
   result := FTitle;
 end;
 
@@ -430,7 +445,7 @@ end;
 
 function  TCrosswordGrid.applyBlanks(var aCol: integer; const aRow: integer; var aNumStr: string): void;
 begin
-  case aNumStr = '' of TRUE: EXIT; end;
+  case aNumStr = EMPTY_STRING of TRUE: EXIT; end;
 
   var vSpaceCount := strToInt(aNumStr);
   for var vC := 1 to vSpaceCount do begin
@@ -438,7 +453,7 @@ begin
     inc(aCol);
   end;
 
-  aNumStr := '';
+  aNumStr := EMPTY_STRING;
 end;
 
 function  TCrosswordGrid.calculateNumbers: void;
@@ -456,7 +471,7 @@ end;
 
 function  TCrosswordGrid.clearSquare: void;
 begin
-  FLetters[gridCol, gridRow] := #0;
+  FLetters[gridCol, gridRow] := EMPTY_CHAR;
   FCrosswordGrid.invalidate;
 end;
 
@@ -464,7 +479,7 @@ function  TCrosswordGrid.encodeGrid: string;
 begin
   result := '';
   for var vRow := 1 to GRID_SIZE do begin
-    case result <> '' of TRUE: result := result + '/'; end;
+    case result <> '' of TRUE: result := result + CHAR_SLASH; end;
     result := result + encodeRow(vRow);
   end;
   result := format('$%s$#%s#%s', [FDate, FTitle, result]);
@@ -477,7 +492,7 @@ begin
 
   for var vCol := 1 to GRID_SIZE do begin
     var vIsCellBlack := FIsBlack  [vCol, aRow];
-    var vHasLetter   := FLetters  [vCol, aRow] <> #0;
+    var vHasLetter   := FLetters  [vCol, aRow] <> EMPTY_CHAR;
     var vHasModifier := FBoldRight[vCol, aRow] OR FBoldBottom[vCol, aRow] OR FHyphenRight[vCol, aRow] OR FHyphenBottom[vCol, aRow];
 
     case (NOT vIsCellBlack) AND (NOT vHasLetter) of TRUE: inc(vEmptyCount); end;
@@ -487,7 +502,7 @@ begin
       vEmptyCount := 0;
     end;end;
 
-    case vIsCellBlack of TRUE: result := result + '.'; end;
+    case vIsCellBlack of TRUE: result := result + CHAR_DOT; end;
     case vHasLetter AND (NOT vIsCellBlack) of TRUE: result := result + FLetters[vCol, aRow]; end;
 
     case vHasModifier AND (vEmptyCount > 0) of TRUE: begin
@@ -495,10 +510,10 @@ begin
       vEmptyCount := 0;
     end;end;
 
-    case FBoldRight     [vCol, aRow]  of TRUE: result := result + '|'; end;
-    case FBoldBottom    [vCol, aRow]  of TRUE: result := result + '_'; end;
-    case FHyphenRight   [vCol, aRow]  of TRUE: result := result + '-'; end;
-    case FHyphenBottom  [vCol, aRow]  of TRUE: result := result + '='; end;
+    case FBoldRight     [vCol, aRow]  of TRUE: result := result + CHAR_VERTICAL_BAR;  end;
+    case FBoldBottom    [vCol, aRow]  of TRUE: result := result + CHAR_UNDERSCORE;    end;
+    case FHyphenRight   [vCol, aRow]  of TRUE: result := result + CHAR_HYPHEN;        end;
+    case FHyphenBottom  [vCol, aRow]  of TRUE: result := result + CHAR_EQUALS;        end;
   end;
 
   case vEmptyCount > 0 of TRUE: result := result + intToStr(vEmptyCount); end;
@@ -672,7 +687,7 @@ procedure  TCrosswordGrid.gridKeyPress(sender: TObject; var aKey: char);
 begin
   case FIsBlack[gridCol, gridRow] of TRUE: EXIT; end;
 
-  var vIsModifier := aKey in ['|', '_', '-', '='];
+  var vIsModifier := aKey in CHAR_SET_MODIFIERS;
 
   case vIsModifier of TRUE: begin
     applyModifier(gridCol, gridRow, aKey);
@@ -680,16 +695,18 @@ begin
     EXIT;
   end;end;
 
-  case aKey in ['a'..'z', 'A'..'Z', KEY_BACKSPACE] of FALSE: EXIT; end;
+  aKey := upCase(aKey);
+
+  case aKey in CHAR_SET_A_TO_Z + [CHAR_BACKSPACE] of FALSE: EXIT; end;
 
   FIsDirty := TRUE;
 
-  case aKey in [KEY_BACKSPACE] of
+  case aKey in [CHAR_BACKSPACE] of
    TRUE:  begin
-            FLetters[gridCol, gridRow] := #0;
+            FLetters[gridCol, gridRow] := EMPTY_CHAR;
             retreatCursor(gridCol, gridRow); end;
   FALSE:  begin
-            FLetters[gridCol, gridRow] := upCase(aKey);
+            FLetters[gridCol, gridRow] := aKey;
             advanceCursor(gridCol, gridRow);
           end;end;
 
@@ -713,7 +730,7 @@ begin
 
   case button = mbRight of TRUE: begin
     FIsBlack      [vCol, vRow]  := TRUE;
-    FLetters      [vCol, vRow]  := #0;
+    FLetters      [vCol, vRow]  := EMPTY_CHAR;
     FBoldRight    [vCol, vRow]  := FALSE;
     FBoldBottom   [vCol, vRow]  := FALSE;
     FHyphenRight  [vCol, vRow]  := FALSE;
