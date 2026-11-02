@@ -166,6 +166,8 @@ type
     function  advanceGridRow: void;
     function  applyBlanks   (var aCol: integer; const aRow: integer; var aNumStr: string): void;
     function  calculateNumbers: void;
+    function  checkClueDigit  (const aDigit: char): void;
+    function  checkGridDirection(const aCol: integer; const aRow: integer; const aGridDirection: TGridDirection): TGridDirection;
     function  clearSquare:  void;
     function  gridCol:      integer;
     function  gridRow:      integer;
@@ -173,7 +175,6 @@ type
     function  encodeRow     (const aRow: integer): string;
     function  jumpToClue    (const aClueNumber: integer): void;
     function  needsNumber   (const aCol: integer; const aRow: integer): boolean;
-    function  processClueJumpDigit  (const aDigit: char): void;
     function  retreatCursor (const aCol: integer; const aRow: integer): void;
     function  retreatGridCol: void;
     function  retreatGridRow: void;
@@ -200,8 +201,6 @@ type
     function  squareInActiveAcrossClue(const aCol: integer; const aRow: integer): boolean;
     function  squareInActiveClue      (const aCol: integer; const aRow: integer): boolean;
     function  squareInActiveDownClue  (const aCol: integer; const aRow: integer): boolean;
-
-    function  updateGridDirection(const aCol: integer; const aRow: integer): void;
 
   public
     constructor Create(const aParent: TWinControl);
@@ -243,6 +242,7 @@ begin
   FCrosswordGrid.options          := [];
   FCrosswordGrid.borderStyle      := bsNone;
   FCrosswordGrid.defaultDrawing   := FALSE;
+//  FCrosswordGrid.doubleBuffered   := TRUE;
 
   FCrosswordGrid.onDrawCell       := gridDrawCell;
   FCrosswordGrid.onKeyPress       := gridKeyPress;
@@ -314,6 +314,32 @@ begin
   result := FDirty;
 end;
 
+function TCrosswordGrid.checkClueDigit(const aDigit: char): void;
+begin
+  var vCurrentTick := winApi.windows.getTickCount64;
+
+  case (vCurrentTick - FLastDigitTick) <= CLUE_JUMP_TIMEOUT_MS of
+     TRUE: FClueJumpBuffer := FClueJumpBuffer + aDigit;
+    FALSE: FClueJumpBuffer := aDigit;
+  end;
+
+  FLastDigitTick := vCurrentTick;
+  jumpToClue(strToInt(FClueJumpBuffer));
+end;
+
+function TCrosswordGrid.checkGridDirection(const aCol: integer; const aRow: integer; const aGridDirection: TGridDirection): TGridDirection;
+begin
+  result := aGridDirection;
+
+  var vCanAcross := ((aCol > 1) and (NOT FBlackSquare[aCol - 1, aRow])) or ((aCol < GRID_SIZE) and (NOT FBlackSquare[aCol + 1, aRow]));
+  var vCanDown   := ((aRow > 1) and (NOT FBlackSquare[aCol, aRow - 1])) or ((aRow < GRID_SIZE) and (NOT FBlackSquare[aCol, aRow + 1]));
+
+  case aGridDirection of
+    gdAcross: case vCanDown and (NOT vCanAcross) of TRUE: result := gdDown; end;
+    gdDown:   case vCanAcross and (NOT vCanDown) of TRUE: result := gdAcross; end;
+  end;
+end;
+
 function  TCrosswordGrid.clearGrid;
 begin
   for var vRow := 1 to GRID_SIZE do
@@ -335,7 +361,7 @@ begin
       case FNumbers[vCol, vRow] = aClueNumber of FALSE: CONTINUE; end;
       FCrosswordGrid.col := vCol - 1;
       FCrosswordGrid.row := vRow - 1;
-      EXIT;
+      BREAK;
     end;
 end;
 
@@ -497,17 +523,6 @@ begin
   result := FTitle;
 end;
 
-function TCrosswordGrid.updateGridDirection(const aCol, aRow: integer): void;
-begin
-  var vCanAcross := ((aCol > 1) and (NOT FBlackSquare[aCol - 1, aRow])) or ((aCol < GRID_SIZE) and (NOT FBlackSquare[aCol + 1, aRow]));
-  var vCanDown   := ((aRow > 1) and (NOT FBlackSquare[aCol, aRow - 1])) or ((aRow < GRID_SIZE) and (NOT FBlackSquare[aCol, aRow + 1]));
-
-  case FGridDirection of
-    gdAcross: case vCanDown and (NOT vCanAcross) of TRUE: FGridDirection := gdDown; end;
-    gdDown:   case vCanAcross and (NOT vCanDown) of TRUE: FGridDirection := gdAcross; end;
-  end;
-end;
-
 { TCrosswordGrid }
 
 function  TCrosswordGrid.advanceCursor(const aCol: integer; const aRow: integer): void;
@@ -571,7 +586,6 @@ end;
 function  TCrosswordGrid.clearSquare: void;
 begin
   FLetters[gridCol, gridRow] := EMPTY_CHAR;
-  FCrosswordGrid.invalidate;
 end;
 
 function  TCrosswordGrid.encodeGrid: string;
@@ -631,19 +645,6 @@ begin
   result := (vHasRight AND (NOT vHasLeft)) OR (vHasBottom AND (NOT vHasTop));
 end;
 
-function TCrosswordGrid.processClueJumpDigit(const aDigit: char): void;
-begin
-var vCurrentTick := winApi.windows.getTickCount64;
-
-  case (vCurrentTick - FLastDigitTick) <= CLUE_JUMP_TIMEOUT_MS of
-   TRUE:  FClueJumpBuffer := FClueJumpBuffer + aDigit;
-   FALSE: FClueJumpBuffer := aDigit;
-  end;
-
-  FLastDigitTick := vCurrentTick;
-  jumpToClue(strToInt(FClueJumpBuffer));
-end;
-
 function TCrosswordGrid.retreatCursor(const aCol: integer; const aRow: integer): void;
 begin
   case FGridDirection of
@@ -670,8 +671,10 @@ begin
   var vInActiveClue := (NOT vSelected) and squareInActiveClue(aCol, aRow);
 
   case FBlackSquare[aCol, aRow]                                                   of TRUE: aCanvas.brush.color := clBlack;   end;
-  case vSelected                                                                  of TRUE: aCanvas.brush.color := $00E2E2E2; end;
-  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := $00EFEFEF; end;
+//  case vSelected                                                                  of TRUE: aCanvas.brush.color := $00E2E2E2; end;
+//  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := $00EFEFEF; end;
+  case vSelected                                                                  of TRUE: aCanvas.brush.color := clMedGray; end;
+  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := clDkGray; end;
   case (NOT FBlackSquare[aCol, aRow]) and (NOT vSelected) and (NOT vInActiveClue) of TRUE: aCanvas.brush.color := clWhite;   end;
 
   aCanvas.fillRect(aRect);
@@ -771,10 +774,10 @@ begin
   var vRow    := aRow + 1;
   var vCanvas := FCrosswordGrid.canvas;
 
-  drawBackground(vCanvas, vCol, vRow, aRect);
-  drawBorders(vCanvas, vCol, vRow, aRect);
-  drawHyphens(vCanvas, vCol, vRow, aRect);
-  drawContent(vCanvas, vCol, vRow, aRect);
+  drawBackground  (vCanvas, vCol, vRow, aRect);
+  drawBorders     (vCanvas, vCol, vRow, aRect);
+  drawHyphens     (vCanvas, vCol, vRow, aRect);
+  drawContent     (vCanvas, vCol, vRow, aRect);
 end;
 
 procedure  TCrosswordGrid.gridKeyDown(sender: TObject; var aKey: word; aShift: TShiftState);
@@ -782,16 +785,9 @@ begin
   case (aKey = VK_RIGHT) OR (aKey = VK_LEFT) of TRUE: FGridDirection := gdAcross; end;
   case (aKey = VK_DOWN)  OR (aKey = VK_UP)   of TRUE: FGridDirection := gdDown;   end;
 
-  case aKey = VK_SPACE of TRUE:
-    case FGridDirection of
-      gdAcross: FGridDirection := gdDown;
-      gdDown:   FGridDirection := gdAcross;
-    end;
-  end;
-
-  case aKey = VK_DELETE of TRUE: clearSquare; end;
-
-  FCrosswordGrid.invalidate;
+  case aKey in [VK_DELETE, VK_SPACE] of TRUE: begin
+                                                clearSquare;
+                                                FCrosswordGrid.invalidate; end;end;
 end;
 
 procedure  TCrosswordGrid.gridKeyPress(sender: TObject; var aKey: char);
@@ -817,9 +813,11 @@ begin
   var vRow := vDrawRow + 1;
 
   case FSetupGrid of FALSE: begin
-                              updateGridDirection(vCol, vRow);
-                              FCrosswordGrid.invalidate;
-                              EXIT; end;end;
+                              var vGridDirection := checkGridDirection(vCol, vRow, FGridDirection);
+                              case vGridDirection = FGridDirection of FALSE:  begin
+                                                                                FGridDirection := vGridDirection;
+                                                                                FCrosswordGrid.invalidate;
+                                                                                EXIT; end;end;end;end;
 
 
   case button = mbLeft of TRUE: FBlackSquare[vCol, vRow] := FALSE; end;
@@ -855,8 +853,9 @@ begin
   result := aKey in CHAR_SET_0_TO_9;
   case result of FALSE: EXIT; end;
 
-  processClueJumpDigit(aKey);
+  checkClueDigit(aKey);
   aKey := EMPTY_CHAR;
+  var vGridDirection := checkGridDirection(gridCol, gridRow, FGridDirection);
 end;
 
 function TCrosswordGrid.handleLetter(var aKey: char): boolean;
