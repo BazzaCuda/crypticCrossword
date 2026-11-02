@@ -96,6 +96,7 @@ type
   void            = record end;
   TClueDirection  = (cdAcross, cdDown);
   TGridModifier   = (gmAcrossWordBreak, gmDownWordBreak, gmAcrossHyphen, gmDownHyphen);
+  TGridDirection  = (gdAcross, gdDown);
 
   ICrosswordGrid = interface
     function  addModifier       (const aCol: integer; const aRow: integer; const aModifier: TGridModifier): void;
@@ -151,7 +152,7 @@ type
     FHyphenRight:     array[1..GRID_SIZE, 1..GRID_SIZE] of boolean;
     FHyphenBottom:    array[1..GRID_SIZE, 1..GRID_SIZE] of boolean;
 
-    FAcrossDirection: boolean;
+    FGridDirection:   TGridDirection;
     FClueJumpBuffer:  string;
     FDate:            string;
     FDirty:           boolean;
@@ -221,7 +222,6 @@ end;
 constructor TCrosswordGrid.Create(const aParent: TWinControl);
 begin
   inherited create;
-  FAcrossDirection  := TRUE;
 
   FCrosswordGrid                  := TDrawGrid.create(aParent);
   FCrosswordGrid.parent           := aParent;
@@ -447,13 +447,14 @@ begin
   var vCanMoveRight := (aCol < GRID_SIZE) and (NOT FIsBlack[aCol + 1, aRow]);
   var vCanMoveDown  := (aRow < GRID_SIZE) and (NOT FIsBlack[aCol, aRow + 1]);
 
-  var vMoveRight := (FAcrossDirection and vCanMoveRight) or (NOT FAcrossDirection and NOT vCanMoveDown and vCanMoveRight);
-  var vMoveDown  := (NOT FAcrossDirection and vCanMoveDown) or (FAcrossDirection and NOT vCanMoveRight and vCanMoveDown);
+  var vMoveRight := ((FGridDirection = gdAcross) and vCanMoveRight) or ((FGridDirection = gdDown) and (NOT vCanMoveDown) and vCanMoveRight);
+  var vMoveDown  := ((FGridDirection = gdDown) and vCanMoveDown) or ((FGridDirection = gdAcross) and (NOT vCanMoveRight) and vCanMoveDown);
 
   case vMoveRight of TRUE: advanceGridCol; end;
   case vMoveDown  of TRUE: advanceGridRow; end;
 
-  FAcrossDirection := (FAcrossDirection and (NOT vMoveDown)) or (vMoveRight and (NOT FAcrossDirection));
+  case vMoveRight of TRUE: FGridDirection := gdAcross; end;
+  case vMoveDown  of TRUE: FGridDirection := gdDown;   end;
 
   var vMoved := vMoveRight or vMoveDown;
   case vMoved and (FLetters[gridCol, gridRow] <> EMPTY_CHAR) of TRUE: advanceCursor(gridCol, gridRow); end;
@@ -573,8 +574,8 @@ end;
 
 function TCrosswordGrid.retreatCursor(const aCol: integer; const aRow: integer): void;
 begin
-  var vMoveLeft := FAcrossDirection AND (aCol > 1);
-  var vMoveUp   := (NOT FAcrossDirection) AND (aRow > 1);
+  var vMoveLeft := (FGridDirection = gdAcross) AND (aCol > 1);
+  var vMoveUp   := (FGridDirection = gdDown)   AND (aRow > 1);
 
   case vMoveLeft of TRUE: retreatGridCol; end;
   case vMoveUp   of TRUE: retreatGridRow; end;
@@ -711,11 +712,14 @@ begin
     EXIT;
   end;end;
 
-  case (aKey = VK_RIGHT) OR (aKey = VK_LEFT) of TRUE: FAcrossDirection := TRUE;  end;
-  case (aKey = VK_DOWN)  OR (aKey = VK_UP)   of TRUE: FAcrossDirection := FALSE; end;
+  case (aKey = VK_RIGHT) OR (aKey = VK_LEFT) of TRUE: FGridDirection := gdAcross; end;
+  case (aKey = VK_DOWN)  OR (aKey = VK_UP)   of TRUE: FGridDirection := gdDown;   end;
 
   case aKey = VK_SPACE of TRUE: begin
-    FAcrossDirection := NOT FAcrossDirection;
+    case FGridDirection of
+      gdAcross: FGridDirection := gdDown;
+      gdDown:   FGridDirection := gdAcross;
+    end;
     FCrosswordGrid.invalidate;
   end;end;
 
