@@ -119,6 +119,8 @@ uses
   _debugWindow;
 
 const
+  CLUE_JUMP_TIMEOUT_MS  = 750;
+
   EMPTY_CHAR            = #0;
   EMPTY_STRING: string  = '';
 
@@ -150,8 +152,10 @@ type
     FHyphenBottom:    array[1..GRID_SIZE, 1..GRID_SIZE] of boolean;
 
     FAcrossDirection: boolean;
+    FClueJumpBuffer:  string;
     FDate:            string;
     FIsDirty:         boolean;
+    FLastDigitTick:   uint64;
     FSetupGrid:       boolean;
     FTitle:           string;
 
@@ -166,7 +170,9 @@ type
     function  gridRow:      integer;
     function  encodeGrid:   string;
     function  encodeRow     (const aRow: integer): string;
+    function  jumpToClue    (const aClueNumber: integer): void;
     function  needsNumber   (const aCol: integer; const aRow: integer): boolean;
+    function  processClueJumpDigit  (const aDigit: char): void;
     function  retreatCursor (const aCol: integer; const aRow: integer): void;
     function  retreatGridCol: void;
     function  retreatGridRow: void;
@@ -308,6 +314,17 @@ end;
 function TCrosswordGrid.isDirty: boolean;
 begin
   result := FIsDirty;
+end;
+
+function TCrosswordGrid.jumpToClue(const aClueNumber: integer): void;
+begin
+  for var vRow := 1 to GRID_SIZE do
+    for var vCol := 1 to GRID_SIZE do begin
+      case FNumbers[vCol, vRow] = aClueNumber of FALSE: CONTINUE; end;
+      FCrosswordGrid.col := vCol - 1;
+      FCrosswordGrid.row := vRow - 1;
+      EXIT;
+    end;
 end;
 
 function  TCrosswordGrid.readSavedGrid(const aFilename: string; const aIx: integer): void;
@@ -535,6 +552,19 @@ begin
   result := (vHasRight AND (NOT vHasLeft)) OR (vHasBottom AND (NOT vHasTop));
 end;
 
+function TCrosswordGrid.processClueJumpDigit(const aDigit: char): void;
+begin
+var vCurrentTick := winApi.windows.getTickCount64;
+
+  case (vCurrentTick - FLastDigitTick) <= CLUE_JUMP_TIMEOUT_MS of
+   TRUE:  FClueJumpBuffer := FClueJumpBuffer + aDigit;
+   FALSE: FClueJumpBuffer := aDigit;
+  end;
+
+  FLastDigitTick := vCurrentTick;
+  jumpToClue(strToInt(FClueJumpBuffer));
+end;
+
 function TCrosswordGrid.retreatCursor(const aCol: integer; const aRow: integer): void;
 begin
   var vMoveLeft := FAcrossDirection AND (aCol > 1);
@@ -695,6 +725,12 @@ begin
   case vIsModifier of TRUE: begin
     applyModifier(gridCol, gridRow, aKey);
     FIsDirty := TRUE;
+    EXIT;
+  end;end;
+
+  case aKey in CHAR_SET_0_TO_9 of TRUE: begin
+    processClueJumpDigit(aKey);
+    aKey := EMPTY_CHAR;
     EXIT;
   end;end;
 
