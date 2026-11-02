@@ -444,19 +444,23 @@ end;
 
 function  TCrosswordGrid.advanceCursor(const aCol: integer; const aRow: integer): void;
 begin
-  var vCanMoveRight := (aCol < GRID_SIZE) and (NOT FIsBlack[aCol + 1, aRow]);
-  var vCanMoveDown  := (aRow < GRID_SIZE) and (NOT FIsBlack[aCol, aRow + 1]);
+  var vMoved := FALSE;
 
-  var vMoveRight := ((FGridDirection = gdAcross) and vCanMoveRight) or ((FGridDirection = gdDown) and (NOT vCanMoveDown) and vCanMoveRight);
-  var vMoveDown  := ((FGridDirection = gdDown) and vCanMoveDown) or ((FGridDirection = gdAcross) and (NOT vCanMoveRight) and vCanMoveDown);
+  case FGridDirection of
+    gdAcross: case (aCol < GRID_SIZE) and (NOT FIsBlack[aCol + 1, aRow]) of
+                TRUE: begin
+                        advanceGridCol;
+                        vMoved := TRUE;
+                      end;
+              end;
+    gdDown:   case (aRow < GRID_SIZE) and (NOT FIsBlack[aCol, aRow + 1]) of
+                TRUE: begin
+                        advanceGridRow;
+                        vMoved := TRUE;
+                      end;
+              end;
+  end;
 
-  case vMoveRight of TRUE: advanceGridCol; end;
-  case vMoveDown  of TRUE: advanceGridRow; end;
-
-  case vMoveRight of TRUE: FGridDirection := gdAcross; end;
-  case vMoveDown  of TRUE: FGridDirection := gdDown;   end;
-
-  var vMoved := vMoveRight or vMoveDown;
   case vMoved and (FLetters[gridCol, gridRow] <> EMPTY_CHAR) of TRUE: advanceCursor(gridCol, gridRow); end;
 end;
 
@@ -574,11 +578,10 @@ end;
 
 function TCrosswordGrid.retreatCursor(const aCol: integer; const aRow: integer): void;
 begin
-  var vMoveLeft := (FGridDirection = gdAcross) AND (aCol > 1);
-  var vMoveUp   := (FGridDirection = gdDown)   AND (aRow > 1);
-
-  case vMoveLeft of TRUE: retreatGridCol; end;
-  case vMoveUp   of TRUE: retreatGridRow; end;
+  case FGridDirection of
+    gdAcross: case (aCol > 1) and (NOT FIsBlack[aCol - 1, aRow]) of TRUE: retreatGridCol; end;
+    gdDown:   case (aRow > 1) and (NOT FIsBlack[aCol, aRow - 1]) of TRUE: retreatGridRow; end;
+  end;
 end;
 
 function TCrosswordGrid.retreatGridCol: void;
