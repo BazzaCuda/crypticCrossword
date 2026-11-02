@@ -201,6 +201,8 @@ type
     function  squareInActiveClue      (const aCol: integer; const aRow: integer): boolean;
     function  squareInActiveDownClue  (const aCol: integer; const aRow: integer): boolean;
 
+    function  updateGridDirection(const aCol: integer; const aRow: integer): void;
+
   public
     constructor Create(const aParent: TWinControl);
 
@@ -374,7 +376,7 @@ end;
 
 function TCrosswordGrid.squareInActiveAcrossClue(const aCol, aRow: integer): boolean;
 begin
-result := FALSE;
+  result := FALSE;
   case aRow <> gridRow of TRUE: EXIT; end;
 
   var vMinCol := aCol;
@@ -394,7 +396,7 @@ end;
 
 function TCrosswordGrid.squareInActiveClue(const aCol, aRow: integer): boolean;
 begin
-result := FALSE;
+  result := FALSE;
   case FBlackSquare[aCol, aRow]       of TRUE: EXIT; end;
   case FBlackSquare[gridCol, gridRow] of TRUE: EXIT; end;
 
@@ -406,7 +408,7 @@ end;
 
 function TCrosswordGrid.squareInActiveDownClue(const aCol, aRow: integer): boolean;
 begin
-result := FALSE;
+  result := FALSE;
   case aCol <> gridCol of TRUE: EXIT; end;
 
   var vMinRow := aRow;
@@ -417,9 +419,8 @@ result := FALSE;
     vMaxRow := aRow;
   end;end;
 
-  for var vRow := vMinRow to vMaxRow do begin
+  for var vRow := vMinRow to vMaxRow do
     case FBlackSquare[aCol, vRow] of TRUE: EXIT; end;
-  end;
 
   result := TRUE;
 end;
@@ -494,6 +495,17 @@ function TCrosswordGrid.title(const aTitle: string = ''): string;
 begin
   case aTitle = EMPTY_STRING of FALSE: FTitle := aTitle; end;
   result := FTitle;
+end;
+
+function TCrosswordGrid.updateGridDirection(const aCol, aRow: integer): void;
+begin
+  var vCanAcross := ((aCol > 1) and (NOT FBlackSquare[aCol - 1, aRow])) or ((aCol < GRID_SIZE) and (NOT FBlackSquare[aCol + 1, aRow]));
+  var vCanDown   := ((aRow > 1) and (NOT FBlackSquare[aCol, aRow - 1])) or ((aRow < GRID_SIZE) and (NOT FBlackSquare[aCol, aRow + 1]));
+
+  case FGridDirection of
+    gdAcross: case vCanDown and (NOT vCanAcross) of TRUE: FGridDirection := gdDown; end;
+    gdDown:   case vCanAcross and (NOT vCanDown) of TRUE: FGridDirection := gdAcross; end;
+  end;
 end;
 
 { TCrosswordGrid }
@@ -658,8 +670,8 @@ begin
   var vInActiveClue := (NOT vSelected) and squareInActiveClue(aCol, aRow);
 
   case FBlackSquare[aCol, aRow]                                                   of TRUE: aCanvas.brush.color := clBlack;   end;
-  case vSelected                                                                  of TRUE: aCanvas.brush.color := $00D8D8D8; end;
-  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := $00E8E8E8; end;
+  case vSelected                                                                  of TRUE: aCanvas.brush.color := $00E2E2E2; end;
+  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := $00EFEFEF; end;
   case (NOT FBlackSquare[aCol, aRow]) and (NOT vSelected) and (NOT vInActiveClue) of TRUE: aCanvas.brush.color := clWhite;   end;
 
   aCanvas.fillRect(aRect);
@@ -767,27 +779,19 @@ end;
 
 procedure  TCrosswordGrid.gridKeyDown(sender: TObject; var aKey: word; aShift: TShiftState);
 begin
-  case aKey = VK_ESCAPE of TRUE: begin
-    var vForm := getParentForm(FCrosswordGrid);
-    case vForm <> NIL of TRUE: TForm(vForm).close; end;
-    EXIT;
-  end;end;
-
   case (aKey = VK_RIGHT) OR (aKey = VK_LEFT) of TRUE: FGridDirection := gdAcross; end;
   case (aKey = VK_DOWN)  OR (aKey = VK_UP)   of TRUE: FGridDirection := gdDown;   end;
 
-  case aKey = VK_SPACE of TRUE: begin
+  case aKey = VK_SPACE of TRUE:
     case FGridDirection of
       gdAcross: FGridDirection := gdDown;
       gdDown:   FGridDirection := gdAcross;
     end;
-    FCrosswordGrid.invalidate;
-  end;end;
+  end;
 
   case aKey = VK_DELETE of TRUE: clearSquare; end;
 
-      FCrosswordGrid.invalidate;
-
+  FCrosswordGrid.invalidate;
 end;
 
 procedure  TCrosswordGrid.gridKeyPress(sender: TObject; var aKey: char);
@@ -803,8 +807,6 @@ end;
 
 procedure  TCrosswordGrid.gridMouseDown(sender: TObject; button: TMouseButton; shift: TShiftState; X: integer; Y: integer);
 begin
-  case FSetupGrid of FALSE: EXIT; end;
-
   var vDrawCol := -1;
   var vDrawRow := -1;
   FCrosswordGrid.mouseToCell(X, Y, vDrawCol, vDrawRow);
@@ -814,10 +816,16 @@ begin
   var vCol := vDrawCol + 1;
   var vRow := vDrawRow + 1;
 
+  case FSetupGrid of FALSE: begin
+                              updateGridDirection(vCol, vRow);
+                              FCrosswordGrid.invalidate;
+                              EXIT; end;end;
+
+
   case button = mbLeft of TRUE: FBlackSquare[vCol, vRow] := FALSE; end;
 
   case button = mbRight of TRUE: begin
-    FBlackSquare      [vCol, vRow]  := TRUE;
+    FBlackSquare  [vCol, vRow]  := TRUE;
     FLetters      [vCol, vRow]  := EMPTY_CHAR;
     FBoldRight    [vCol, vRow]  := FALSE;
     FBoldBottom   [vCol, vRow]  := FALSE;
