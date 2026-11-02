@@ -724,11 +724,12 @@ end;
 
 procedure  TCrosswordGrid.gridKeyPress(sender: TObject; var aKey: char);
 begin
+  case handleDigit(aKey)     of TRUE: EXIT; end;
+  case handleBackspace(aKey) of TRUE: EXIT; end;
+
   case FIsBlack[gridCol, gridRow] of TRUE: EXIT; end;
 
   case handleModifier(aKey)  of TRUE: EXIT; end;
-  case handleDigit(aKey)     of TRUE: EXIT; end;
-  case handleBackspace(aKey) of TRUE: EXIT; end;
   case handleLetter(aKey)    of TRUE: EXIT; end;
 end;
 
