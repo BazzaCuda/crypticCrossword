@@ -37,23 +37,26 @@ Simply pass the string to the stringToGrid method to populate the grid.
 
 **grid setup**
 
-Ctrl-Delete to toggle setup mode.
+| key | action |
+| --- | --- |
+| Ctrl-Delete | toggle setup mode |
+| BACKSPACE | clear grid |
+| left-click | set the square to an empty letter square |
+| right-click | set the square to a black non-letter square |
 
-BACKSPACE to clear grid
-
-left-click: set the square to an empty letter square
-
-right-click: set the square to a black non-letter square
-
-across and down clue numbers are assigned automatically as you amend the grid
+N.B. across and down clue numbers are assigned automatically as you amend the grid
 
 **entering letters**
 
-DELETE - empty the square but stay put
+| key | action |
+| --- | --- |
+| A - Z | entered in the grid |
+| DELETE | empty the square but stay put |
+| BACKSPACE | empty the square and reverse the cursor one square |
+| arrow keys | move cursor |
+| digits | position to first letter of a clue number. Allows for the difference between clue 24 and clues 2 and 4 |
 
-BACKSPACE - empty the square and reverse the cursor one square
-
-arrow keys - move cursor
+N.B. The cursor will skip over squares that already contain a letter
 
 **square modifiers**
 
@@ -78,9 +81,11 @@ In addition to specifying the word-break and hyphenations in the layout string, 
 
 **save the grid at any time**
 
-Ctrl-S to save the grid to a text file in the same folder as the exe
+| key | action |
+| --- | --- |
+| Ctrl-S | add the grid to the `crypticCrossword.txt` file in the same folder as the exe |
 
-Closing the app also saves the current grid
+Closing the app also saves the current grid if it has been changed
 
 
   
