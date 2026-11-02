@@ -782,12 +782,26 @@ end;
 
 procedure  TCrosswordGrid.gridKeyDown(sender: TObject; var aKey: word; aShift: TShiftState);
 begin
-  case (aKey = VK_RIGHT) OR (aKey = VK_LEFT) of TRUE: FGridDirection := gdAcross; end;
-  case (aKey = VK_DOWN)  OR (aKey = VK_UP)   of TRUE: FGridDirection := gdDown;   end;
+  case aKey in [VK_RIGHT, VK_LEFT, VK_UP, VK_DOWN] of TRUE: begin
+    var vCol := gridCol;
+    var vRow := gridRow;
+
+    case (aKey = VK_RIGHT) and (vCol < GRID_SIZE) of TRUE: inc(vCol); end;
+    case (aKey = VK_LEFT)  and (vCol > 1)         of TRUE: dec(vCol); end;
+    case (aKey = VK_DOWN)  and (vRow < GRID_SIZE) of TRUE: inc(vRow); end;
+    case (aKey = VK_UP)    and (vRow > 1)         of TRUE: dec(vRow); end;
+
+    case (aKey = VK_RIGHT) or (aKey = VK_LEFT) of TRUE: FGridDirection := gdAcross; end;
+    case (aKey = VK_DOWN)  or (aKey = VK_UP)   of TRUE: FGridDirection := gdDown;   end;
+
+    FGridDirection := checkGridDirection(vCol, vRow, FGridDirection);
+    FCrosswordGrid.invalidate;
+  end;end;
 
   case aKey in [VK_DELETE, VK_SPACE] of TRUE: begin
-                                                clearSquare;
-                                                FCrosswordGrid.invalidate; end;end;
+    clearSquare;
+    FCrosswordGrid.invalidate;
+  end;end;
 end;
 
 procedure  TCrosswordGrid.gridKeyPress(sender: TObject; var aKey: char);
