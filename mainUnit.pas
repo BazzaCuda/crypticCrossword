@@ -75,7 +75,7 @@ end;
 procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   case FCrosswordGrid = NIL   of  TRUE: EXIT; end;
-  case FCrosswordGrid.isDirty of FALSE: EXIT; end;
+  case FCrosswordGrid.changed of FALSE: EXIT; end;
   FCrosswordGrid.saveGridToFile(extractFilePath(paramStr(0)) + 'crypticCrossword.txt');
 end;
 

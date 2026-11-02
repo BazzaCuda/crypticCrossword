@@ -102,8 +102,8 @@ type
     function  addModifierByClue (const aClueNumber: integer; const aDirection: TClueDirection; const aLetterPosition: integer; const aModifier: TGridModifier): void;
     function  applyModifier     (const aCol: integer; const aRow: integer; aKey: char): void;
     function  arrayToGrid       (const aLines: array of string): void;
+    function  changed:        boolean;
     function  clearGrid:      void;
-    function  isDirty:        boolean;
     function  readSavedGrid     (const aFilename: string; const aIx: integer): void;
     function  saveGridToFile    (const aFilename: string): void;
     function  setupGrid:      boolean;
@@ -154,7 +154,7 @@ type
     FAcrossDirection: boolean;
     FClueJumpBuffer:  string;
     FDate:            string;
-    FIsDirty:         boolean;
+    FDirty:         boolean;
     FLastDigitTick:   uint64;
     FSetupGrid:       boolean;
     FTitle:           string;
@@ -190,6 +190,12 @@ type
     procedure gridKeyPress(sender: TObject; var aKey: char);
     procedure gridMouseDown(sender: TObject; button: TMouseButton; shift: TShiftState; X: integer; Y: integer);
 
+    { key handlers }
+    function  handleBackspace(var aKey: char): boolean;
+    function  handleDigit(var aKey: char): boolean;
+    function  handleLetter(var aKey: char): boolean;
+    function  handleModifier(var aKey: char): boolean;
+
   public
     constructor Create(const aParent: TWinControl);
 
@@ -198,8 +204,8 @@ type
     function  addModifierByClue   (const aClueNumber: integer; const aDirection: TClueDirection; const aLetterPosition: integer; const aModifier: TGridModifier): void;
     function  applyModifier       (const aCol: integer; const aRow: integer; aKey: char): void;
     function  arrayToGrid         (const aLines: array of string): void;
-    function  clearGrid: void;
-    function  isDirty: boolean;
+    function  changed:            boolean;
+    function  clearGrid:          void;
     function  readSavedGrid       (const aFilename: string; const aIx: integer): void;
     function  saveGridToFile      (const aFilename: string): void;
     function  setupGrid: boolean;
@@ -297,6 +303,11 @@ begin
   stringToGrid(vCombined);
 end;
 
+function TCrosswordGrid.changed: boolean;
+begin
+  result := FDirty;
+end;
+
 function  TCrosswordGrid.clearGrid;
 begin
   for var vRow := 1 to GRID_SIZE do
@@ -309,11 +320,6 @@ begin
       FHyphenRight  [vCol, vRow]  := FALSE;
       FHyphenBottom [vCol, vRow]  := FALSE;
     end;
-end;
-
-function TCrosswordGrid.isDirty: boolean;
-begin
-  result := FIsDirty;
 end;
 
 function TCrosswordGrid.jumpToClue(const aClueNumber: integer): void;
@@ -353,7 +359,7 @@ begin
   finally
     vStringList.free;
   end;
-  FIsDirty := FALSE;
+  FDirty := FALSE;
 end;
 
 function TCrosswordGrid.setupGrid: boolean;
@@ -720,36 +726,10 @@ procedure  TCrosswordGrid.gridKeyPress(sender: TObject; var aKey: char);
 begin
   case FIsBlack[gridCol, gridRow] of TRUE: EXIT; end;
 
-  var vIsModifier := aKey in CHAR_SET_MODIFIERS;
-
-  case vIsModifier of TRUE: begin
-    applyModifier(gridCol, gridRow, aKey);
-    FIsDirty := TRUE;
-    EXIT;
-  end;end;
-
-  case aKey in CHAR_SET_0_TO_9 of TRUE: begin
-    processClueJumpDigit(aKey);
-    aKey := EMPTY_CHAR;
-    EXIT;
-  end;end;
-
-  aKey := upCase(aKey);
-
-  case aKey in CHAR_SET_A_TO_Z + [CHAR_BACKSPACE] of FALSE: EXIT; end;
-
-  FIsDirty := TRUE;
-
-  case aKey in [CHAR_BACKSPACE] of
-   TRUE:  begin
-            FLetters[gridCol, gridRow] := EMPTY_CHAR;
-            retreatCursor(gridCol, gridRow); end;
-  FALSE:  begin
-            FLetters[gridCol, gridRow] := aKey;
-            advanceCursor(gridCol, gridRow);
-          end;end;
-
-  FCrosswordGrid.invalidate;
+  case handleModifier(aKey)  of TRUE: EXIT; end;
+  case handleDigit(aKey)     of TRUE: EXIT; end;
+  case handleBackspace(aKey) of TRUE: EXIT; end;
+  case handleLetter(aKey)    of TRUE: EXIT; end;
 end;
 
 procedure  TCrosswordGrid.gridMouseDown(sender: TObject; button: TMouseButton; shift: TShiftState; X: integer; Y: integer);
@@ -777,8 +757,52 @@ begin
   end;end;
 
   calculateNumbers;
-  FIsDirty := TRUE;
+  FDirty := TRUE;
   FCrosswordGrid.invalidate;
+end;
+
+function TCrosswordGrid.handleBackspace(var aKey: char): boolean;
+begin
+  result := aKey = CHAR_BACKSPACE;
+  case result of FALSE: EXIT; end;
+
+  FDirty                   := TRUE;
+  FLetters[gridCol, gridRow] := EMPTY_CHAR;
+  retreatCursor(gridCol, gridRow);
+  FCrosswordGrid.invalidate;
+  aKey                       := EMPTY_CHAR;
+end;
+
+function TCrosswordGrid.handleDigit(var aKey: char): boolean;
+begin
+  result := aKey in CHAR_SET_0_TO_9;
+  case result of FALSE: EXIT; end;
+
+  processClueJumpDigit(aKey);
+  aKey := EMPTY_CHAR;
+end;
+
+function TCrosswordGrid.handleLetter(var aKey: char): boolean;
+begin
+  aKey   := upCase(aKey);
+  result := aKey in CHAR_SET_A_TO_Z;
+  case result of FALSE: EXIT; end;
+
+  FDirty  := TRUE;
+  FLetters[gridCol, gridRow] := aKey;
+  advanceCursor(gridCol, gridRow);
+  FCrosswordGrid.invalidate;
+  aKey    := EMPTY_CHAR;
+end;
+
+function TCrosswordGrid.handleModifier(var aKey: char): boolean;
+begin
+  result := aKey in CHAR_SET_MODIFIERS;
+  case result of FALSE: EXIT; end;
+
+  applyModifier(gridCol, gridRow, aKey);
+  FDirty := TRUE;
+  aKey     := EMPTY_CHAR;
 end;
 
 end.
