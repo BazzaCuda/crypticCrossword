@@ -194,6 +194,7 @@ type
 
     { key handlers }
     function  handleBackspace(var aKey: char): boolean;
+    function  handleDot(var aKey: char): boolean;
     function  handleDigit(var aKey: char): boolean;
     function  handleLetter(var aKey: char): boolean;
     function  handleModifier(var aKey: char): boolean;
@@ -782,7 +783,7 @@ end;
 
 procedure  TCrosswordGrid.gridKeyDown(sender: TObject; var aKey: word; aShift: TShiftState);
 begin
-  case aKey in [VK_RIGHT, VK_LEFT, VK_UP, VK_DOWN] of TRUE: begin
+  case aKey in [VK_LEFT, VK_RIGHT, VK_UP, VK_DOWN] of TRUE: begin
     var vCol := gridCol;
     var vRow := gridRow;
 
@@ -791,8 +792,8 @@ begin
     case (aKey = VK_DOWN)  and (vRow < GRID_SIZE) of TRUE: inc(vRow); end;
     case (aKey = VK_UP)    and (vRow > 1)         of TRUE: dec(vRow); end;
 
-    case (aKey = VK_RIGHT) or (aKey = VK_LEFT) of TRUE: FGridDirection := gdAcross; end;
-    case (aKey = VK_DOWN)  or (aKey = VK_UP)   of TRUE: FGridDirection := gdDown;   end;
+    case (aKey = VK_LEFT) or (aKey = VK_RIGHT) of TRUE: FGridDirection := gdAcross; end;
+    case (aKey = VK_UP)   or (aKey = VK_DOWN)  of TRUE: FGridDirection := gdDown;   end;
 
     FGridDirection := checkGridDirection(vCol, vRow, FGridDirection);
     FCrosswordGrid.invalidate;
@@ -806,13 +807,14 @@ end;
 
 procedure  TCrosswordGrid.gridKeyPress(sender: TObject; var aKey: char);
 begin
-  case handleDigit(aKey)     of TRUE: EXIT; end;
-  case handleBackspace(aKey) of TRUE: EXIT; end;
+  case handleDigit(aKey)      of TRUE: EXIT; end;
+  case handleBackspace(aKey)  of TRUE: EXIT; end;
 
   case FBlackSquare[gridCol, gridRow] of TRUE: EXIT; end;
 
-  case handleModifier(aKey)  of TRUE: EXIT; end;
-  case handleLetter(aKey)    of TRUE: EXIT; end;
+  case handleModifier(aKey)   of TRUE: EXIT; end;
+  case handleLetter(aKey)     of TRUE: EXIT; end;
+  case handleDot(aKey)        of TRUE: EXIT; end;
 end;
 
 procedure  TCrosswordGrid.gridMouseDown(sender: TObject; button: TMouseButton; shift: TShiftState; X: integer; Y: integer);
@@ -870,6 +872,20 @@ begin
   checkClueDigit(aKey);
   aKey := EMPTY_CHAR;
   var vGridDirection := checkGridDirection(gridCol, gridRow, FGridDirection);
+end;
+
+function TCrosswordGrid.handleDot(var aKey: char): boolean;
+begin
+  result := aKey = CHAR_DOT;
+  case result of FALSE: EXIT; end;
+
+  case FGridDirection of
+    gdAcross: FGridDirection := gdDown;
+    gdDown:   FGridDirection := gdAcross;
+  end;
+
+  FCrosswordGrid.invalidate;
+  aKey := EMPTY_CHAR;
 end;
 
 function TCrosswordGrid.handleLetter(var aKey: char): boolean;
