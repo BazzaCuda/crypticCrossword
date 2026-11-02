@@ -362,7 +362,15 @@ begin
       case FNumbers[vCol, vRow] = aClueNumber of FALSE: CONTINUE; end;
       FCrosswordGrid.col := vCol - 1;
       FCrosswordGrid.row := vRow - 1;
-      FGridDirection := checkGridDirection(vCol, vRow, FGridDirection);
+
+      var vHasLeft   := (vCol > 1)         and (NOT FBlackSquare[vCol - 1, vRow]);
+      var vHasRight  := (vCol < GRID_SIZE) and (NOT FBlackSquare[vCol + 1, vRow]);
+      var vHasTop    := (vRow > 1)         and (NOT FBlackSquare[vCol, vRow - 1]);
+      var vHasBottom := (vRow < GRID_SIZE) and (NOT FBlackSquare[vCol, vRow + 1]);
+
+      case vHasRight and (NOT vHasLeft) of  TRUE: FGridDirection := gdAcross; end;
+      case (NOT (vHasRight and (NOT vHasLeft))) and (vHasBottom and (NOT vHasTop)) of  TRUE: FGridDirection := gdDown; end;
+
       BREAK;
     end;
 end;
