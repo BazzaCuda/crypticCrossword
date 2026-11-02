@@ -345,7 +345,7 @@ function  TCrosswordGrid.clearGrid;
 begin
   for var vRow := 1 to GRID_SIZE do
     for var vCol := 1 to GRID_SIZE do begin
-      FBlackSquare      [vCol, vRow]  := FALSE;
+      FBlackSquare  [vCol, vRow]  := FALSE;
       FNumbers      [vCol, vRow]  := 0;
       FLetters      [vCol, vRow]  := EMPTY_CHAR;
       FBoldRight    [vCol, vRow]  := FALSE;
@@ -353,6 +353,7 @@ begin
       FHyphenRight  [vCol, vRow]  := FALSE;
       FHyphenBottom [vCol, vRow]  := FALSE;
     end;
+  FCrosswordGrid.invalidate;
 end;
 
 function TCrosswordGrid.jumpToClue(const aClueNumber: integer): void;

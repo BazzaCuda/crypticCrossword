@@ -44,6 +44,9 @@ var
 
 implementation
 
+uses
+  _debugWindow;
+
 {$R *.dfm}
 
 constructor TMainForm.create(aOwner: TComponent);
@@ -82,9 +85,18 @@ end;
 procedure TMainForm.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   case key = VK_ESCAPE of TRUE: close; end;
-  case (ssCtrl in shift) and (key = VK_DELETE) of TRUE: FSetupGrid := FCrosswordGrid.setupGrid; end;
-  case FSetupGrid and (key = VK_BACK) and (ssCtrl in shift) of TRUE: FCrosswordGrid.clearGrid; end;
-  case (ssCtrl in shift) and ((key = ord('s')) or (key = ord('S'))) of TRUE: FCrosswordGrid.saveGridToFile(extractFilePath(paramStr(0)) + 'crypticCrossword.txt'); end;
+
+  case (ssCtrl in shift) and (key = VK_DELETE) of TRUE: begin
+                                                          FSetupGrid := FCrosswordGrid.setupGrid;
+                                                          key := 0; end;end;
+
+  case FSetupGrid and (ssCtrl in shift) and (key = VK_BACK) of TRUE:  begin
+                                                                        key := 0;
+                                                                        FCrosswordGrid.clearGrid; end;end;
+
+  case (ssCtrl in shift) and ((key = ord('s')) or (key = ord('S'))) of TRUE:  begin
+                                                                                FCrosswordGrid.saveGridToFile(extractFilePath(paramStr(0)) + 'crypticCrossword.txt');
+                                                                                key := 0; end;end;
 
   case FSetupGrid of   TRUE: SELF.color := clAqua   + $000000;
                       FALSE: SELF.color := clWhite  - $101010; end;
