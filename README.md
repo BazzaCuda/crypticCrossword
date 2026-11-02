@@ -7,6 +7,9 @@ Crossword Grid creator
 **layout string**
 
 The layout string describes the grid, row by row, similar to FEN chess notation
+
+see the .dpr file and `crypticCrossword.txt` for examples
+
 | character | purpose |
 | ----- | ----- |
 | dot . | is a black, non-square in the grid |
