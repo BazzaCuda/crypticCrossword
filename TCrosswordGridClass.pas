@@ -154,7 +154,7 @@ type
     FAcrossDirection: boolean;
     FClueJumpBuffer:  string;
     FDate:            string;
-    FDirty:         boolean;
+    FDirty:           boolean;
     FLastDigitTick:   uint64;
     FSetupGrid:       boolean;
     FTitle:           string;
