@@ -680,8 +680,12 @@ begin
   var vInActiveClue := NOT FSetupGrid and (NOT vSelected) and squareInActiveClue(aCol, aRow);
 
   case FBlackSquare[aCol, aRow]                                                   of TRUE: aCanvas.brush.color := clBlack;   end;
-  case vSelected                                                                  of TRUE: aCanvas.brush.color := $00E2E2E2; end;
-  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := $00EFEFEF; end;
+//  case vSelected                                                                  of TRUE: aCanvas.brush.color := $00E2E2E2; end;
+//  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := $00EFEFEF; end;
+//  case vSelected                                                                  of TRUE: aCanvas.brush.color := $00D7D7D7; end;
+//  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := $00E8E8E8; end;
+  case vSelected                                                                  of TRUE: aCanvas.brush.color := $00DEDEDE; end;
+  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := $00EBEBEB; end;
 //  case vSelected                                                                  of TRUE: aCanvas.brush.color := clMedGray; end; // less subtle, for testing
 //  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := clDkGray;  end; // less subtle, for testing
   case (NOT FBlackSquare[aCol, aRow]) and (NOT vSelected) and (NOT vInActiveClue) of TRUE: aCanvas.brush.color := clWhite;   end;
