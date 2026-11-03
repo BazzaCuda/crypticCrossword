@@ -409,6 +409,7 @@ begin
   finally
     vStringList.free;
   end;
+  FDirty := FALSE;
 end;
 
 function  TCrosswordGrid.saveGridToFile(const aFilename: string): void;
