@@ -102,12 +102,13 @@ type
     function  addModifier       (const aCol: integer; const aRow: integer; const aModifier: TGridModifier): void;
     function  addModifierByClue (const aClueNumber: integer; const aDirection: TClueDirection; const aLetterPosition: integer; const aModifier: TGridModifier): void;
     function  applyModifier     (const aCol: integer; const aRow: integer; aKey: char): void;
+    function  applySymmetry:    void;
     function  arrayToGrid       (const aLines: array of string): void;
-    function  changed:        boolean;
-    function  clearGrid:      void;
+    function  changed:          boolean;
+    function  clearGrid:        void;
     function  readSavedGrid     (const aFilename: string; const aIx: integer): void;
     function  saveGridToFile    (const aFilename: string): void;
-    function  setupGrid:      boolean;
+    function  setupGrid:        boolean;
     function  stringToGrid      (const aLayout: string): void;
     function  title             (const aTitle: string = ''): string;
   end;
@@ -210,6 +211,7 @@ type
     function  addModifier         (const aCol: integer; const aRow: integer; const aModifier: TGridModifier): void;
     function  addModifierByClue   (const aClueNumber: integer; const aDirection: TClueDirection; const aLetterPosition: integer; const aModifier: TGridModifier): void;
     function  applyModifier       (const aCol: integer; const aRow: integer; aKey: char): void;
+    function  applySymmetry:      void;
     function  arrayToGrid         (const aLines: array of string): void;
     function  changed:            boolean;
     function  clearGrid:          void;
@@ -296,6 +298,24 @@ begin
   FHyphenRight  [aCol, aRow]  := FHyphenRight   [aCol, aRow] XOR (aKey = CHAR_HYPHEN);
   FHyphenBottom [aCol, aRow]  := FHyphenBottom  [aCol, aRow] XOR (aKey = CHAR_EQUALS);
 
+  FCrosswordGrid.invalidate;
+end;
+
+function TCrosswordGrid.applySymmetry: void;
+begin
+  case FSetupGrid of FALSE: EXIT; end;
+
+  var vMiddleRow := (GRID_SIZE + 1) div 2;
+
+  for var vRow := 1 to vMiddleRow - 1 do
+    for var vCol := 1 to GRID_SIZE do
+      FBlackSquare[GRID_SIZE - vCol + 1, GRID_SIZE - vRow + 1] := FBlackSquare[vCol, vRow];
+
+  for var vCol := 1 to (GRID_SIZE div 2) do
+    FBlackSquare[GRID_SIZE - vCol + 1, vMiddleRow] := FBlackSquare[vCol, vMiddleRow];
+
+  calculateNumbers;
+  FDirty := TRUE;
   FCrosswordGrid.invalidate;
 end;
 
@@ -408,6 +428,7 @@ function TCrosswordGrid.setupGrid: boolean;
 begin
   FSetupGrid  := NOT FSetupGrid;
   result      := FSetupGrid;
+  FCrosswordGrid.invalidate;
 end;
 
 function TCrosswordGrid.squareInActiveAcrossClue(const aCol, aRow: integer): boolean;
@@ -679,16 +700,17 @@ begin
   var vSelected     := NOT FSetupGrid and (NOT FBlackSquare[aCol, aRow]) and (aCol = gridCol) and (aRow = gridRow);
   var vInActiveClue := NOT FSetupGrid and (NOT vSelected) and squareInActiveClue(aCol, aRow);
 
-  case FBlackSquare[aCol, aRow]                                                   of TRUE: aCanvas.brush.color := clBlack;   end;
-//  case vSelected                                                                  of TRUE: aCanvas.brush.color := $00E2E2E2; end;
-//  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := $00EFEFEF; end;
-//  case vSelected                                                                  of TRUE: aCanvas.brush.color := $00D7D7D7; end;
-//  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := $00E8E8E8; end;
-  case vSelected                                                                  of TRUE: aCanvas.brush.color := $00DEDEDE; end;
-  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := $00EBEBEB; end;
-//  case vSelected                                                                  of TRUE: aCanvas.brush.color := clMedGray; end; // less subtle, for testing
-//  case vInActiveClue                                                              of TRUE: aCanvas.brush.color := clDkGray;  end; // less subtle, for testing
-  case (NOT FBlackSquare[aCol, aRow]) and (NOT vSelected) and (NOT vInActiveClue) of TRUE: aCanvas.brush.color := clWhite;   end;
+  case FBlackSquare[aCol, aRow] of TRUE: aCanvas.brush.color := clBlack;   end;
+//  case vSelected                of TRUE: aCanvas.brush.color := $00E2E2E2; end;
+//  case vInActiveClue            of TRUE: aCanvas.brush.color := $00EFEFEF; end;
+//  case vSelected                of TRUE: aCanvas.brush.color := $00D7D7D7; end;
+//  case vInActiveClue            of TRUE: aCanvas.brush.color := $00E8E8E8; end;
+  case vSelected                of TRUE: aCanvas.brush.color := $00DEDEDE; end;
+  case vInActiveClue            of TRUE: aCanvas.brush.color := $00EBEBEB; end;
+//  case vSelected                of TRUE: aCanvas.brush.color := clMedGray; end; // less subtle, for testing
+//  case vInActiveClue            of TRUE: aCanvas.brush.color := clDkGray;  end; // less subtle, for testing
+
+  case NOT FBlackSquare[aCol, aRow] and NOT vSelected and NOT vInActiveClue of TRUE: aCanvas.brush.color := clWhite;   end;
 
   aCanvas.fillRect(aRect);
 end;
@@ -711,6 +733,15 @@ begin
   case (aRow = GRID_SIZE) or FBoldBottom[aCol, aRow] of TRUE: begin
     aCanvas.moveTo(aRect.left, aRect.bottom - 1);
     aCanvas.lineTo(aRect.right, aRect.bottom - 1);
+  end;end;
+
+  var vPivot := FSetupGrid and (aCol = (GRID_SIZE + 1) div 2) and (aRow = (GRID_SIZE + 1) div 2);
+  case vPivot of TRUE: begin
+    aCanvas.brush.style := bsClear;
+    aCanvas.pen.color   := $00CCFFFF;
+    aCanvas.pen.width   := 2;
+    aCanvas.rectangle(aRect.left + 2, aRect.top + 2, aRect.right, aRect.bottom);
+    aCanvas.brush.style := bsSolid;
   end;end;
 end;
 

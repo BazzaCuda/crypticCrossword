@@ -27,6 +27,8 @@ uses
   TCrosswordGridClass;
 
 type
+  void = record end;
+
   TMainForm = class(TForm)
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -36,7 +38,8 @@ type
     FSetupGrid:     boolean;
   public
     constructor create(aOwner: TComponent); override;
-    property    mainGrid: ICrosswordGrid read FCrosswordGrid;
+    function  setCaption(const aCaption: string): void;
+    property  mainGrid: ICrosswordGrid read FCrosswordGrid;
   end;
 
 var
@@ -47,7 +50,8 @@ implementation
 uses
   _debugWindow;
 
-{$R *.dfm}
+const
+  APP_TITLE = 'Cryptic Crossword Grid';
 
 constructor TMainForm.create(aOwner: TComponent);
 begin
@@ -94,13 +98,30 @@ begin
                                                                         key := 0;
                                                                         FCrosswordGrid.clearGrid; end;end;
 
-  case (ssCtrl in shift) and ((key = ord('s')) or (key = ord('S'))) of TRUE:  begin
-                                                                                FCrosswordGrid.saveGridToFile(extractFilePath(paramStr(0)) + 'crypticCrossword.txt');
-                                                                                key := 0; end;end;
+  case FSetupGrid and (ssCtrl in shift) and (key = ord('D')) of TRUE: begin
+                                                                        FCrosswordGrid.applySymmetry;
+                                                                        key := 0; end;end;
+
+  case (ssCtrl in shift) and (key = ord('S')) of TRUE:  begin
+                                                          FCrosswordGrid.saveGridToFile(extractFilePath(paramStr(0)) + 'crypticCrossword.txt');
+                                                          key := 0; end;end;
+
+  case (ssCtrl in shift) and (key = ord('T')) of TRUE:  begin
+                                                          var s := InputBox('Crossword Title', '', FCrosswordGrid.title);
+                                                          setCaption(FCrosswordGrid.title(s));
+                                                          FCrosswordGrid.saveGridToFile(extractFilePath(paramStr(0)) + 'crypticCrossword.txt');
+                                                          key := 0; end;end;
 
   case FSetupGrid of   TRUE: SELF.color := clAqua   + $000000;
                       FALSE: SELF.color := clWhite  - $101010; end;
 
 end;
+
+function TMainForm.setCaption(const aCaption: string): void;
+begin
+  caption := format('%s - %s', [APP_TITLE, aCaption]);
+end;
+
+{$R *.dfm}
 
 end.
