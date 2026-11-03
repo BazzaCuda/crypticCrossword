@@ -152,10 +152,10 @@ type
     FHyphenRight:     array[1..GRID_SIZE, 1..GRID_SIZE] of boolean;
     FHyphenBottom:    array[1..GRID_SIZE, 1..GRID_SIZE] of boolean;
 
-    FGridDirection:   TGridDirection;
     FClueJumpBuffer:  string;
     FDate:            string;
     FDirty:           boolean;
+    FGridDirection:   TGridDirection;
     FLastDigitTick:   uint64;
     FSetupGrid:       boolean;
     FTitle:           string;
@@ -243,7 +243,6 @@ begin
   FCrosswordGrid.options          := [];
   FCrosswordGrid.borderStyle      := bsNone;
   FCrosswordGrid.defaultDrawing   := FALSE;
-//  FCrosswordGrid.doubleBuffered   := TRUE;
 
   FCrosswordGrid.onDrawCell       := gridDrawCell;
   FCrosswordGrid.onKeyPress       := gridKeyPress;
@@ -379,7 +378,7 @@ end;
 function  TCrosswordGrid.readSavedGrid(const aFilename: string; const aIx: integer): void;
 begin
   case fileExists(aFilename) of FALSE: EXIT; end;
-  var vIx  := aIx;
+  var vIx := aIx;
 
   var vStringList := TStringList.create;
   try
@@ -407,8 +406,8 @@ end;
 
 function TCrosswordGrid.setupGrid: boolean;
 begin
-  FSetupGrid := NOT FSetupGrid;
-  result := FSetupGrid;
+  FSetupGrid  := NOT FSetupGrid;
+  result      := FSetupGrid;
 end;
 
 function TCrosswordGrid.squareInActiveAcrossClue(const aCol, aRow: integer): boolean;
@@ -424,14 +423,13 @@ begin
     vMaxCol := aCol;
   end;end;
 
-  for var vCol := vMinCol to vMaxCol do begin
+  for var vCol := vMinCol to vMaxCol do
     case FBlackSquare[vCol, aRow] of TRUE: EXIT; end;
-  end;
 
   result := TRUE;
 end;
 
-function TCrosswordGrid.squareInActiveClue(const aCol, aRow: integer): boolean;
+function TCrosswordGrid.squareInActiveClue(const aCol: integer; const aRow: integer): boolean;
 begin
   result := FALSE;
   case FBlackSquare[aCol, aRow]       of TRUE: EXIT; end;
@@ -443,7 +441,7 @@ begin
   end;
 end;
 
-function TCrosswordGrid.squareInActiveDownClue(const aCol, aRow: integer): boolean;
+function TCrosswordGrid.squareInActiveDownClue(const aCol: integer; const aRow: integer): boolean;
 begin
   result := FALSE;
   case aCol <> gridCol of TRUE: EXIT; end;
@@ -648,10 +646,10 @@ begin
   result := FALSE;
   case FBlackSquare[aCol, aRow] of TRUE: EXIT; end;
 
-  var vHasLeft   := (aCol > 1)         AND (NOT FBlackSquare[aCol - 1, aRow]);
-  var vHasRight  := (aCol < GRID_SIZE) AND (NOT FBlackSquare[aCol + 1, aRow]);
-  var vHasTop    := (aRow > 1)         AND (NOT FBlackSquare[aCol, aRow - 1]);
-  var vHasBottom := (aRow < GRID_SIZE) AND (NOT FBlackSquare[aCol, aRow + 1]);
+  var vHasLeft   := (aCol > 1)         and (NOT FBlackSquare[aCol - 1, aRow]);
+  var vHasRight  := (aCol < GRID_SIZE) and (NOT FBlackSquare[aCol + 1, aRow]);
+  var vHasTop    := (aRow > 1)         and (NOT FBlackSquare[aCol, aRow - 1]);
+  var vHasBottom := (aRow < GRID_SIZE) and (NOT FBlackSquare[aCol, aRow + 1]);
 
   result := (vHasRight AND (NOT vHasLeft)) OR (vHasBottom AND (NOT vHasTop));
 end;
@@ -701,12 +699,12 @@ begin
   aCanvas.moveTo(aRect.left, aRect.top);
   aCanvas.lineTo(aRect.left, aRect.bottom);
 
-  case (aCol = GRID_SIZE) OR FBoldRight[aCol, aRow] of TRUE: begin
+  case (aCol = GRID_SIZE) or FBoldRight[aCol, aRow] of TRUE: begin
     aCanvas.moveTo(aRect.right - 1, aRect.top);
     aCanvas.lineTo(aRect.right - 1, aRect.bottom);
   end;end;
 
-  case (aRow = GRID_SIZE) OR FBoldBottom[aCol, aRow] of TRUE: begin
+  case (aRow = GRID_SIZE) or FBoldBottom[aCol, aRow] of TRUE: begin
     aCanvas.moveTo(aRect.left, aRect.bottom - 1);
     aCanvas.lineTo(aRect.right, aRect.bottom - 1);
   end;end;
@@ -848,8 +846,7 @@ begin
                               var vGridDirection := checkGridDirection(vCol, vRow, FGridDirection);
                               case vGridDirection = FGridDirection of FALSE: FGridDirection := vGridDirection; end;
                               FCrosswordGrid.invalidate;
-                              EXIT;
-                              end;end;
+                              EXIT; end;end;
 
 
   case button = mbLeft of TRUE: FBlackSquare[vCol, vRow] := FALSE; end;

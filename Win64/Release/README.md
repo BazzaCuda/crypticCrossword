@@ -43,7 +43,7 @@ Simply pass the string to the stringToGrid method to populate the grid.
 | key | action |
 | --- | --- |
 | Ctrl-Delete | toggle setup mode |
-| BACKSPACE | clear grid |
+| Ctrl-Backspace | clear grid completely - all squares will be white |
 | left-click | set the square to an empty letter square |
 | right-click | set the square to a black non-letter square |
 
@@ -54,12 +54,13 @@ N.B. across and down clue numbers are assigned automatically as you amend the gr
 | key | action |
 | --- | --- |
 | A - Z | entered in the grid |
-| DELETE | empty the square but stay put |
-| BACKSPACE | empty the square and reverse the cursor one square |
-| arrow keys | move cursor |
+| Delete | empty the square but stay put |
+| Backspace | empty the square and reverse the cursor one square |
+| arrow keys | move cursor - will jump over black squares |
 | digits | position to first letter of a clue number. Allows for the difference between clue 24 and clues 2 and 4 |
+| dot . | toggle the across/down grid direction at a clue intersection to highlight the required clue |
 
-N.B. The cursor will skip over squares that already contain a letter
+N.B. When typing letters into the grid, the cursor will skip over squares that already contain a letter
 
 **square modifiers**
 
