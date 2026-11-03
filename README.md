@@ -1,7 +1,8 @@
 # crypticCrossword
 Crossword Grid creator
 
-<img width="585" height="608" alt="2026-10-28_011257 grid" src="https://github.com/user-attachments/assets/eee619b2-d2ad-477b-b378-99187821228b" />
+<img width="567" height="595" alt="image" src="https://github.com/user-attachments/assets/8e69fe1c-c6c7-4191-a682-e3910c10e6bf" />
+
 
 
 **layout string**
