@@ -1,6 +1,9 @@
 # crypticCrossword
 Crossword Grid creator
 
+- TCrosswordGrid in TCrosswordGridClass.pas is, in effect, a reusable component
+- the accompanying project is, in effect, a demo of the class in use
+
 <img width="567" height="595" alt="image" src="https://github.com/user-attachments/assets/8e69fe1c-c6c7-4191-a682-e3910c10e6bf" />
 
 
