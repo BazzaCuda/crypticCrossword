@@ -50,6 +50,7 @@ Simply pass the string to the stringToGrid method to populate the grid.
 | Ctrl-Backspace | clear grid completely - all squares will be white |
 | left-click | set the square to an empty letter square |
 | right-click | set the square to a black non-letter square |
+| Ctrl-D | Duplicate the symmetry of the top half of the grid (up to and including the central pivot square) into the bottom half |
 
 N.B. across and down clue numbers are assigned automatically as you amend the grid
 
