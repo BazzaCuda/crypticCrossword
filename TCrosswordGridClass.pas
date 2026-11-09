@@ -212,7 +212,7 @@ type
     function  addModifierByClue   (const aClueNumber: integer; const aDirection: TClueDirection; const aLetterPosition: integer; const aModifier: TGridModifier): void;
     function  applyModifier       (const aCol: integer; const aRow: integer; aKey: char): void;
     function  applySymmetry:      void;
-    function  arrayToGrid         (const aLines: array of string): void;
+    function  arrayToGrid         (const aRows: array of string): void;
     function  changed:            boolean;
     function  clearGrid:          void;
     function  readSavedGrid       (const aFilename: string; const aIx: integer): void;
@@ -254,7 +254,7 @@ end;
 
 { ICrosswordGrid }
 
-function  TCrosswordGrid.addModifier(const aCol: integer; const aRow: integer; const aModifier: TGridModifier): void;
+function TCrosswordGrid.addModifier(const aCol: integer; const aRow: integer; const aModifier: TGridModifier): void;
 begin
   FBoldRight    [aCol, aRow]  := FBoldRight     [aCol, aRow]  OR (aModifier = gmAcrossWordBreak);
   FBoldBottom   [aCol, aRow]  := FBoldBottom    [aCol, aRow]  OR (aModifier = gmDownWordBreak);
@@ -264,7 +264,7 @@ begin
   FCrosswordGrid.invalidate;
 end;
 
-function  TCrosswordGrid.addModifierByClue(const aClueNumber: integer; const aDirection: TClueDirection; const aLetterPosition: integer; const aModifier: TGridModifier): void;
+function TCrosswordGrid.addModifierByClue(const aClueNumber: integer; const aDirection: TClueDirection; const aLetterPosition: integer; const aModifier: TGridModifier): void;
 begin
   var vFound     := FALSE;
   var vTargetCol := 0;
@@ -291,7 +291,7 @@ begin
   case vFound of TRUE: addModifier(vTargetCol, vTargetRow, aModifier); end;
 end;
 
-function  TCrosswordGrid.applyModifier(const aCol: integer; const aRow: integer; aKey: char): void;
+function TCrosswordGrid.applyModifier(const aCol: integer; const aRow: integer; aKey: char): void;
 begin
   FBoldRight    [aCol, aRow]  := FBoldRight     [aCol, aRow] XOR (aKey = CHAR_VERTICAL_BAR);
   FBoldBottom   [aCol, aRow]  := FBoldBottom    [aCol, aRow] XOR (aKey = CHAR_UNDERSCORE);
@@ -319,12 +319,12 @@ begin
   FCrosswordGrid.invalidate;
 end;
 
-function  TCrosswordGrid.arrayToGrid(const aLines: array of string): void;
+function TCrosswordGrid.arrayToGrid(const aRows: array of string): void;
 begin
   var vCombined := EMPTY_STRING;
-  for var vIndex := low(aLines) to high(aLines) do begin
+  for var vIndex := low(aRows) to high(aRows) do begin
     case vCombined <> EMPTY_STRING of TRUE: vCombined := vCombined + CHAR_SLASH; end;
-    vCombined := vCombined + aLines[vIndex];
+    vCombined := vCombined + aRows[vIndex];
   end;
   stringToGrid(vCombined);
 end;
@@ -360,7 +360,7 @@ begin
   end;
 end;
 
-function  TCrosswordGrid.clearGrid;
+function TCrosswordGrid.clearGrid;
 begin
   for var vRow := 1 to GRID_SIZE do
     for var vCol := 1 to GRID_SIZE do begin
@@ -395,7 +395,7 @@ begin
     end;
 end;
 
-function  TCrosswordGrid.readSavedGrid(const aFilename: string; const aIx: integer): void;
+function TCrosswordGrid.readSavedGrid(const aFilename: string; const aIx: integer): void;
 begin
   case fileExists(aFilename) of FALSE: EXIT; end;
   var vIx := aIx;
@@ -412,7 +412,7 @@ begin
   FDirty := FALSE;
 end;
 
-function  TCrosswordGrid.saveGridToFile(const aFilename: string): void;
+function TCrosswordGrid.saveGridToFile(const aFilename: string): void;
 begin
   var vStringList := TStringList.create;
   try
@@ -482,7 +482,7 @@ begin
   result := TRUE;
 end;
 
-function  TCrosswordGrid.stringToGrid(const aLayout: string): void;
+function TCrosswordGrid.stringToGrid(const aLayout: string): void;
 begin
   clearGrid;
 
@@ -556,7 +556,7 @@ end;
 
 { TCrosswordGrid }
 
-function  TCrosswordGrid.advanceCursor(const aCol: integer; const aRow: integer): void;
+function TCrosswordGrid.advanceCursor(const aCol: integer; const aRow: integer): void;
 begin
   var vMoved := FALSE;
 
@@ -588,7 +588,7 @@ begin
   FCrosswordGrid.row := FCrosswordGrid.row + 1;
 end;
 
-function  TCrosswordGrid.applyBlanks(var aCol: integer; const aRow: integer; var aNumStr: string): void;
+function TCrosswordGrid.applyBlanks(var aCol: integer; const aRow: integer; var aNumStr: string): void;
 begin
   case aNumStr = EMPTY_STRING of TRUE: EXIT; end;
 
@@ -601,7 +601,7 @@ begin
   aNumStr := EMPTY_STRING;
 end;
 
-function  TCrosswordGrid.calculateNumbers: void;
+function TCrosswordGrid.calculateNumbers: void;
 begin
   var vNum := 1;
   for var vRow := 1 to GRID_SIZE do
@@ -614,12 +614,12 @@ begin
     end;
 end;
 
-function  TCrosswordGrid.clearSquare: void;
+function TCrosswordGrid.clearSquare: void;
 begin
   FLetters[gridCol, gridRow] := EMPTY_CHAR;
 end;
 
-function  TCrosswordGrid.encodeGrid: string;
+function TCrosswordGrid.encodeGrid: string;
 begin
   result := '';
   for var vRow := 1 to GRID_SIZE do begin
@@ -629,7 +629,7 @@ begin
   result := format('$%s$#%s#%s', [FDate, FTitle, result]);
 end;
 
-function  TCrosswordGrid.encodeRow(const aRow: integer): string;
+function TCrosswordGrid.encodeRow(const aRow: integer): string;
 begin
   result := '';
   var vEmptyCount := 0;
@@ -663,7 +663,7 @@ begin
   case vEmptyCount > 0 of TRUE: result := result + intToStr(vEmptyCount); end;
 end;
 
-function  TCrosswordGrid.needsNumber(const aCol: integer; const aRow: integer): boolean;
+function TCrosswordGrid.needsNumber(const aCol: integer; const aRow: integer): boolean;
 begin
   result := FALSE;
   case FBlackSquare[aCol, aRow] of TRUE: EXIT; end;
@@ -696,7 +696,7 @@ end;
 
 { draw methods }
 
-function  TCrosswordGrid.drawBackground(const aCanvas: TCanvas; const aCol: integer; const aRow: integer; const aRect: TRect): void;
+function TCrosswordGrid.drawBackground(const aCanvas: TCanvas; const aCol: integer; const aRow: integer; const aRect: TRect): void;
 begin
   var vSelected     := NOT FSetupGrid and (NOT FBlackSquare[aCol, aRow]) and (aCol = gridCol) and (aRow = gridRow);
   var vInActiveClue := NOT FSetupGrid and (NOT vSelected) and squareInActiveClue(aCol, aRow);
@@ -716,7 +716,7 @@ begin
   aCanvas.fillRect(aRect);
 end;
 
-function  TCrosswordGrid.drawBorders(const aCanvas: TCanvas; const aCol: integer; const aRow: integer; const aRect: TRect): void;
+function TCrosswordGrid.drawBorders(const aCanvas: TCanvas; const aCol: integer; const aRow: integer; const aRect: TRect): void;
 begin
   aCanvas.pen.color := clBlack;
   aCanvas.pen.width := 1;
@@ -739,14 +739,14 @@ begin
   var vPivot := FSetupGrid and (aCol = (GRID_SIZE + 1) div 2) and (aRow = (GRID_SIZE + 1) div 2);
   case vPivot of TRUE: begin
     aCanvas.brush.style := bsClear;
-    aCanvas.pen.color   := $00CCFFFF;
+    aCanvas.pen.color   := clGreen;
     aCanvas.pen.width   := 2;
     aCanvas.rectangle(aRect.left + 2, aRect.top + 2, aRect.right, aRect.bottom);
     aCanvas.brush.style := bsSolid;
   end;end;
 end;
 
-function  TCrosswordGrid.drawContent(const aCanvas: TCanvas; const aCol: integer; const aRow: integer; const aRect: TRect): void;
+function TCrosswordGrid.drawContent(const aCanvas: TCanvas; const aCol: integer; const aRow: integer; const aRect: TRect): void;
 begin
   case FBlackSquare[aCol, aRow] of TRUE: EXIT; end;
 
@@ -772,7 +772,7 @@ begin
   end;end;
 end;
 
-function  TCrosswordGrid.drawHyphens(const aCanvas: TCanvas; const aCol: integer; const aRow: integer; const aRect: TRect): void;
+function TCrosswordGrid.drawHyphens(const aCanvas: TCanvas; const aCol: integer; const aRow: integer; const aRect: TRect): void;
 begin
   aCanvas.pen.width := 2;
   var vMidY := aRect.top + ((aRect.bottom - aRect.top) div 2);
